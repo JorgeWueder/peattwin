@@ -342,3 +342,38 @@ en un único proceso y sin contenedores.
 
 Pendiente / mejora futura: índices de vegetación (NDVI/LAI) para elevar el R² del
 NEE, más sitios FLUXNET-CH4, tests automatizados y CI.
+
+---
+
+## Uso de inteligencia artificial generativa en el desarrollo
+
+Este proyecto se desarrolló con asistencia de **Claude Code** (Anthropic), un
+asistente de programación basado en modelos de lenguaje de gran tamaño, operado
+de forma interactiva a lo largo de tres sesiones de desarrollo. Se declara aquí
+por coherencia con la declaración equivalente del artículo científico asociado.
+
+**Para qué se usó:**
+
+- Implementación y refinamiento iterativo, bajo especificación e instrucción del
+  autor, de los módulos `ml/etl/`, `ml/eda/` y `ml/training/`, del esquema de
+  base de datos y sus migraciones, de la capa de dominio en `app/`, del módulo
+  de informes y de la aplicación Streamlit (`streamlit_app.py`, `views/`, `ui/`).
+- Redacción del borrador del artículo científico a partir de los artefactos
+  numéricos que produce este repositorio.
+- Extracción y síntesis de la bibliografía consultada para el marco teórico.
+
+**Para qué NO se usó:**
+
+- No se empleó para generar, simular, alterar ni seleccionar datos. Todos los
+  valores de `ml/eda/tablas/`, `ml/training/*.csv` y las figuras de
+  `ml/*/figuras/` proceden de ejecutar el código de este repositorio sobre las
+  observaciones reales de FLUXNET-CH4 del sitio DE-Zrk descritas más arriba.
+
+El diseño experimental, la elección de arquitecturas y del protocolo de
+validación, los criterios de selección de modelos y la interpretación de los
+resultados corresponden al autor, que ha revisado y verificado la totalidad del
+contenido generado con asistencia y asume la responsabilidad plena sobre la
+exactitud, la integridad y la originalidad del trabajo.
+
+Los commits de este repositorio llevan la línea `Co-Authored-By` correspondiente
+a esa asistencia.
