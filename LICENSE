@@ -19,22 +19,3 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
-
----
-
-Terceros y datos
-----------------
-
-Fuentes tipograficas. Los ficheros de `static/fonts/` son la familia Geist,
-Copyright (c) 2023 Vercel, en colaboracion con basement.studio, distribuida
-bajo la SIL Open Font License 1.1. El texto completo de esa licencia esta en
-`static/fonts/LICENSE-Geist.txt` y no queda cubierto por la licencia MIT
-anterior.
-
-Datos de flujo. Los resultados, figuras y tablas derivados en `ml/eda/` y
-`ml/training/` proceden de la red FLUXNET-CH4 (coleccion 2020, producto diario),
-sitio DE-Zrk (Zarnekow), bajo licencia CC-BY-4.0. Su reutilizacion exige
-atribucion a la coleccion FLUXNET-CH4 y al investigador principal del sitio
-(Torsten Sachs, GFZ Potsdam; red EuroFlux/ICOS). Ver la seccion de fuentes de
-datos del README para la cita completa. Los ficheros originales de
-`data/raw/` no se distribuyen en este repositorio.
