@@ -1,0 +1,40 @@
+# PeatTwin - aplicacion Streamlit
+# Instalar dentro de un entorno virtual, desde la raiz del repo:
+#   python -m venv .venv
+#   .\.venv\Scripts\Activate.ps1        (Linux/macOS: source .venv/bin/activate)
+#   pip install -r requirements.txt
+
+# --- Interfaz ---
+streamlit==1.63.0            # st.navigation / st.Page requieren >= 1.36
+altair==6.2.2                # graficos declarativos de las vistas
+
+# --- Persistencia (PostgreSQL local, servicio nativo) ---
+SQLAlchemy==2.0.36
+alembic==1.14.0
+psycopg2-binary==2.9.10
+pydantic==2.10.4
+pydantic-settings==2.7.0
+python-dotenv==1.0.1
+
+# --- Autenticacion ---
+bcrypt==4.2.1                  # hash y verificacion de contrasenas
+
+# --- Inferencia del modelo activo (simulador y series) ---
+# Mismas versiones con las que se serializo modelo_final.pkl (ml/.venv).
+joblib==1.6.0
+numpy==2.4.6
+pandas==3.0.5
+scikit-learn==1.9.0
+xgboost==3.2.0
+pyarrow==21.0.0                # leer los parquet de data/processed/
+
+# --- Generacion de informes ---
+reportlab==4.2.5               # PDF (resumen ejecutivo)
+python-docx==1.1.2             # Word (informe tecnico)
+openpyxl==3.1.5                # Excel (exportacion de datos)
+matplotlib==3.10.0             # figuras al vuelo (flujos, matriz de confusion, ROC)
+
+# --- Reentrenamiento desde la seccion Motor IA ---
+# Necesario para el CNN-LSTM (y para cargar un modelo activo en formato .h5).
+# Mismo pin que ml/.venv, donde ya convive con numpy 2.4.6 / scikit-learn 1.9.0.
+tensorflow==2.21.0

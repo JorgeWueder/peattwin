@@ -1,0 +1,113 @@
+[server]
+headless = true
+port = 8501
+# Sirve `static/` en /app/static/: es como llegan al navegador las Geist
+# auto-alojadas de `[[theme.fontFaces]]`. Sin esto la app caeria al stack del
+# sistema y perderia la direccion tipografica.
+enableStaticServing = true
+
+[browser]
+gatherUsageStats = false
+
+# =====================================================================
+# Tokens de diseno de PeatTwin
+#
+# Direccion: instrumento de medicion, no panel generico. Referencias reales
+# (Linear, Vercel, Stripe): neutros zinc frios, un unico acento, escala
+# tipografica contenida y numeros en monoespaciada tabular.
+#
+# Decisiones bloqueadas (una sola por proyecto, aplicada en todas las vistas):
+#   - Acento         emerald #059669, el que ya tenia la marca y comparten los
+#                    graficos Altair y las figuras de los informes.
+#   - Neutros        familia zinc en frio. Sin blancos ni negros puros.
+#   - Radio          8px en todo. Un unico valor, sin mezclas.
+#   - Tipografia     Geist / Geist Mono. Una sola familia; el enfasis sale del
+#                    peso, nunca de meter otra fuente.
+# =====================================================================
+[theme]
+base = "light"
+primaryColor = "#059669"
+
+font = "Geist"
+headingFont = "Geist"
+codeFont = "Geist Mono"
+
+# 15px: mas denso que el defecto de 16 sin bajar a los 13-14 que castigarian
+# la legibilidad de los `st.caption` de interpretacion.
+baseFontSize = 15
+
+# Escala contenida. El defecto de Streamlit abre h1 a 2.75rem, medida de
+# landing: en un dashboard hace que cada titulo de vista parta en dos lineas y
+# compita con los datos. La jerarquia la lleva el peso y el color.
+headingFontSizes = ["1.75rem", "1.3125rem", "1.0625rem", "0.9375rem", "0.875rem", "0.8125rem"]
+headingFontWeights = [600, 600, 550, 550, 550, 550]
+
+baseRadius = "0.5rem"
+buttonRadius = "0.5rem"
+showWidgetBorder = true
+
+# Paleta de los graficos: mismo orden que `ui/charts.py` (observado = tinta,
+# predicho = esmeralda, CH4 = naranja) para que interfaz e informes coincidan.
+chartCategoricalColors = ["#18181b", "#059669", "#ea580c", "#0891b2", "#7c3aed"]
+
+[[theme.fontFaces]]
+family = "Geist"
+url = "app/static/fonts/Geist-Regular.woff2"
+weight = 400
+
+[[theme.fontFaces]]
+family = "Geist"
+url = "app/static/fonts/Geist-Medium.woff2"
+weight = 500
+
+[[theme.fontFaces]]
+family = "Geist"
+url = "app/static/fonts/Geist-SemiBold.woff2"
+weight = 600
+
+[[theme.fontFaces]]
+family = "Geist Mono"
+url = "app/static/fonts/GeistMono-Regular.woff2"
+weight = 400
+
+[[theme.fontFaces]]
+family = "Geist Mono"
+url = "app/static/fonts/GeistMono-Medium.woff2"
+weight = 500
+
+[theme.light]
+backgroundColor = "#fcfcfd"
+secondaryBackgroundColor = "#f4f4f5"
+textColor = "#18181b"
+borderColor = "#e4e4e7"
+linkColor = "#047857"
+codeBackgroundColor = "#f4f4f5"
+codeTextColor = "#3f3f46"
+dataframeHeaderBackgroundColor = "#f4f4f5"
+dataframeBorderColor = "#e4e4e7"
+
+[theme.light.sidebar]
+backgroundColor = "#f8f8f9"
+secondaryBackgroundColor = "#ececee"
+textColor = "#27272a"
+borderColor = "#e4e4e7"
+
+# Modo oscuro definido, no heredado: las tres skills coinciden en que enviar un
+# solo modo es trabajo a medias. Mismos neutros zinc, mismo acento, sin negro
+# puro (mata la profundidad y delata el defecto de plantilla).
+[theme.dark]
+backgroundColor = "#09090b"
+secondaryBackgroundColor = "#18181b"
+textColor = "#fafafa"
+borderColor = "#27272a"
+linkColor = "#34d399"
+codeBackgroundColor = "#18181b"
+codeTextColor = "#d4d4d8"
+dataframeHeaderBackgroundColor = "#18181b"
+dataframeBorderColor = "#27272a"
+
+[theme.dark.sidebar]
+backgroundColor = "#0c0c0e"
+secondaryBackgroundColor = "#1f1f23"
+textColor = "#e4e4e7"
+borderColor = "#27272a"

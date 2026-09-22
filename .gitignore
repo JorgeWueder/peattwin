@@ -1,0 +1,44 @@
+# --- Python ---
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ipynb_checkpoints/
+
+# --- Entorno ---
+.env
+.env.local
+.env*.local
+
+# --- Streamlit ---
+.streamlit/secrets.toml
+
+# --- Logs del pipeline ML ---
+ml/logs/
+
+# --- Artefactos ML ---
+ml/models/*
+!ml/models/.gitkeep
+
+# --- Datos ---
+data/raw/*
+!data/raw/.gitkeep
+data/processed/*
+!data/processed/.gitkeep
+
+# --- OS / editores ---
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
+# --- Excluidos de la publicacion ---
+Referencias/
+*.docx
+
+# --- Skills de diseno de terceros (no son codigo del proyecto) ---
+.agents/
+skills-lock.json
