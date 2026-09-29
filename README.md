@@ -185,6 +185,16 @@ streamlit run streamlit_app.py
 > una vez (sección 4). El fichero `ml/models/modelo_final.pkl` también lo genera
 > ese módulo; la app lo **carga** en la primera predicción (no lo entrena).
 
+### Idioma (Español / English)
+
+Un selector **Español | English** aparece en la pantalla de acceso y en la barra
+lateral. Cambia toda la interfaz y también los informes generados (Word, PDF y
+Excel), incluidos los bloques de *Interpretación* y *Explicabilidad*. El idioma se
+conserva al cerrar sesión. Se implementa en `app/core/i18n.py` (`tr(es, en)`) y
+`ui/i18n.py`. Quedan en español los textos que vienen de los artefactos del
+pipeline ML (resúmenes markdown, nombres de columnas de las tablas de
+`data/processed`) y las descripciones de roles/permisos sembradas en la BD.
+
 ### Acceso y control por rol
 
 El **primer** usuario que se registre (pestaña «Crear una cuenta») recibe el rol

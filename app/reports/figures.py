@@ -11,6 +11,7 @@ import matplotlib.pyplot as plt  # noqa: E402
 import numpy as np  # noqa: E402
 from sklearn.metrics import roc_curve  # noqa: E402
 
+from app.core.i18n import tr  # noqa: E402
 from app.reports.common import HoldoutSeries  # noqa: E402
 
 _EMERALD = "#059669"
@@ -28,8 +29,8 @@ def _png(fig) -> bytes:
 def flux_series_png(hs: HoldoutSeries) -> bytes:
     x = np.arange(len(hs.dates))
     fig, axes = plt.subplots(2, 1, figsize=(8.6, 5.2), sharex=True)
-    axes[0].plot(x, hs.nee_obs, color=_INK, lw=1.0, label="observado")
-    axes[0].plot(x, hs.nee_pred, color=_EMERALD, lw=1.8, label="predicho")
+    axes[0].plot(x, hs.nee_obs, color=_INK, lw=1.0, label=tr("observado", "observed"))
+    axes[0].plot(x, hs.nee_pred, color=_EMERALD, lw=1.8, label=tr("predicho", "predicted"))
     axes[0].axhline(0, color="#a1a1aa", lw=0.8, ls="--")
     axes[0].set_ylabel("NEE / CO₂\n(gC m⁻² d⁻¹)")
     axes[0].legend(loc="upper right", fontsize=8, frameon=False)
@@ -42,7 +43,7 @@ def flux_series_png(hs: HoldoutSeries) -> bytes:
     for ax in axes:
         ax.tick_params(labelsize=8)
         ax.spines[["top", "right"]].set_visible(False)
-    fig.suptitle("Flujos de carbono — observado vs predicho", fontsize=11)
+    fig.suptitle(tr("Flujos de carbono — observado vs predicho", "Carbon fluxes — observed vs predicted"), fontsize=11)
     fig.tight_layout()
     return _png(fig)
 
@@ -54,9 +55,9 @@ def confusion_png(tn: int, fp: int, fn: int, tp: int, model_name: str) -> bytes:
     for (i, j), v in np.ndenumerate(cm):
         ax.text(j, i, str(int(v)), ha="center", va="center",
                 color="white" if v > cm.max() / 2 else _INK, fontsize=14, fontweight="bold")
-    ax.set_xticks([0, 1]); ax.set_xticklabels(["fuente", "sumidero"])
-    ax.set_yticks([0, 1]); ax.set_yticklabels(["fuente", "sumidero"])
-    ax.set_xlabel("predicho"); ax.set_ylabel("real")
+    ax.set_xticks([0, 1]); ax.set_xticklabels([tr("fuente", "source"), tr("sumidero", "sink")])
+    ax.set_yticks([0, 1]); ax.set_yticklabels([tr("fuente", "source"), tr("sumidero", "sink")])
+    ax.set_xlabel(tr("predicho", "predicted")); ax.set_ylabel(tr("real", "actual"))
     ax.set_title(f"Matriz de confusión — {model_name}\n(holdout 2018)", fontsize=10)
     fig.tight_layout()
     return _png(fig)
@@ -69,9 +70,9 @@ def roc_png(y_true: list[int], proba: list[float], auc: float | None, model_name
         ax.plot(fpr, tpr, color=_EMERALD, lw=2.2,
                 label=f"AUC = {auc:.3f}" if auc is not None else "ROC")
     ax.plot([0, 1], [0, 1], color="#a1a1aa", lw=1, ls="--")
-    ax.set_xlabel("Tasa de falsos positivos")
+    ax.set_xlabel(tr("Tasa de falsos positivos", "False positive rate"))
     ax.set_ylabel("Tasa de verdaderos positivos\n(recall de sumidero)")
-    ax.set_title(f"Curva ROC — {model_name}", fontsize=10)
+    ax.set_title(f"{tr('Curva ROC', 'ROC curve')} — {model_name}", fontsize=10)
     ax.legend(loc="lower right", fontsize=9, frameon=False)
     ax.spines[["top", "right"]].set_visible(False)
     fig.tight_layout()
