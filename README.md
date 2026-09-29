@@ -254,6 +254,11 @@ python -m ml.training.statistical_tests
 Detalle en [ml/etl/README.md](ml/etl/README.md), [ml/eda/README.md](ml/eda/README.md)
 y [ml/training/README.md](ml/training/README.md).
 
+El catálogo completo de lo que producen estos pasos —**21 figuras y 11 tablas**,
+cada una con su interpretación escrita y sus salvedades— está en
+[FIGURAS_Y_TABLAS.md](FIGURAS_Y_TABLAS.md), que además marca la selección de 6
+tablas y 6 figuras propuesta para el artículo.
+
 ---
 
 ## 5. Verificación: el modelo se **carga**, no se reentrena al iniciar la app
