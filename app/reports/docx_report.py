@@ -38,14 +38,29 @@ def _h(doc: Document, text: str, level: int = 1):
     return p
 
 
-def _interp(doc: Document, text: str):
+def _bloque_anotado(doc: Document, rotulo: str, text: str, espacio: int):
     p = doc.add_paragraph()
-    r = p.add_run("Interpretación. ")
+    r = p.add_run(f"{rotulo}. ")
     r.bold = True
     r.font.color.rgb = _ACCENT
     p.add_run(text)
     p.paragraph_format.left_indent = Pt(12)
-    p.paragraph_format.space_after = Pt(10)
+    p.paragraph_format.space_after = Pt(espacio)
+
+
+def _interp(doc: Document, text: str):
+    """Que SIGNIFICA el dato. Va primero: es lo que sostiene el argumento."""
+    _bloque_anotado(doc, "Interpretación", text, espacio=2)
+
+
+def _expl(doc: Document, text: str):
+    """POR QUE se puede afirmar lo anterior: ejes, unidades, datos y calculo.
+
+    Va debajo de la interpretacion, como respaldo auditable. El mismo orden que
+    usa la aplicacion (`ui/interpret.py`), para que informe e interfaz se lean
+    igual.
+    """
+    _bloque_anotado(doc, "Explicabilidad", text, espacio=10)
 
 
 def _note(doc: Document, text: str):
@@ -166,6 +181,14 @@ def build(
         "Limitación registrada: el sitio no midió humedad del suelo; no hay ninguna variable "
         "de contenido de agua del suelo en el dataset.",
     )
+    _expl(
+        doc,
+        "La tabla cuenta filas en tres momentos del pipeline: el CSV crudo de "
+        "FLUXNET-CH4 tal como se descarga, las observaciones que sobreviven al "
+        "recorte temporal 2016-2018, y las de la matriz final de aprendizaje, ya "
+        "con las ventanas y los retardos aplicados (que consumen los primeros días "
+        "de la serie).",
+    )
 
     # ============================================================ 2. EDA
     _h(doc, "2. Análisis exploratorio (EDA)", 1)
@@ -192,6 +215,16 @@ def build(
         "Zarnekow opera como fen inundado. El perfil de temperatura del suelo amortigua su "
         "amplitud con la profundidad, de ahí que baste TS_promedio.",
     )
+    _expl(
+        doc,
+        "Los estadísticos se calculan sobre los 1096 días de la serie diaria. Media "
+        "y mediana van en la unidad de cada variable: NEE en gC m⁻² d⁻¹, FCH4 en "
+        "nmol m⁻² s⁻¹, temperaturas en °C, WTD en metros sobre la superficie. La "
+        "asimetría y la curtosis de exceso valen 0 en una distribución normal, así "
+        "que cuánto más se alejan de 0, más se aparta la variable de ella. La "
+        "figura muestra el histograma de cada variable con su estimación de "
+        "densidad superpuesta.",
+    )
     norm = C.read_csv_rows(C.EDA_TBL / "06_normalidad.csv")
     if norm:
         _table(
@@ -210,6 +243,15 @@ def build(
             "condiciona el paso de pruebas estadísticas: se usan contrastes no paramétricos "
             "(Wilcoxon, Kruskal-Wallis, Friedman) o transformaciones (log1p en FCH4).",
         )
+        _expl(
+            doc,
+            "Shapiro-Wilk contrasta la hipótesis nula de que los datos proceden de una "
+            "distribución normal: el estadístico W se acerca a 1 cuando lo son, y un "
+            "p-valor por debajo de 0.05 RECHAZA esa hipótesis. Se aplica a las "
+            "variables clave y también a los residuos de la descomposición estacional, "
+            "para separar la no normalidad propia de la variable de la que induce el "
+            "ciclo anual.",
+        )
     _add_fig_path(doc, C.fig(C.EDA_FIG / "03_correlacion_pearson_heatmap.png"), 5.8)
     _interp(
         doc,
@@ -218,6 +260,14 @@ def build(
         "TS_promedio). El FCH4 correlaciona fuerte con la temperatura del suelo y con TA_F; "
         "el NEE, sobre todo con la radiación, con signo negativo (más luz → más fotosíntesis "
         "→ NEE más negativo).",
+    )
+    _expl(
+        doc,
+        "Cada celda del mapa es el coeficiente de correlación de Pearson del par "
+        "fila-columna, entre −1 (relación inversa perfecta) y +1 (directa "
+        "perfecta), con el 0 en el centro de la escala de color. Pearson mide "
+        "relación LINEAL; la diagonal vale 1 por definición y la matriz es "
+        "simétrica.",
     )
 
     # ============================================================ 3. Entrenamiento
@@ -256,6 +306,17 @@ def build(
         "controlado por temperatura de suelo y nivel freático (ambos medidos), se predice "
         "bien (R² ≈ 0.7–0.85).",
     )
+    _expl(
+        doc,
+        "Todas las métricas proceden del mismo holdout temporal: se entrena con "
+        "2016-2017 y se evalúa sobre 2018 completo, sin barajar. RMSE y MAE son "
+        "errores en la unidad del objetivo, luego menor es mejor; R², NSE y KGE son "
+        "adimensionales y valen 1 en la predicción perfecta, 0 cuando el modelo "
+        "iguala a predecir la media y negativo si la empeora. Accuracy, F1 y AUC "
+        "corresponden a la clasificación sumidero/fuente. En el mapa de calor cada "
+        "columna se normaliza min-max por separado, de modo que el color indica el "
+        "ORDEN dentro de esa métrica y no su magnitud absoluta.",
+    )
 
     # ============================================================ 4. Validación cruzada
     _h(doc, "4. Validación cruzada temporal", 1)
@@ -290,6 +351,16 @@ def build(
         "CNN-LSTM, los que más varían. El primer fold entrena con muy pocos días (< medio "
         "ciclo estacional) y da R² negativos en casi todos los modelos: es un hallazgo "
         "esperado sobre suficiencia de datos, no un fallo. NSE ≡ R² por definición.",
+    )
+    _expl(
+        doc,
+        "Cada fila resume los folds de `TimeSeriesSplit`: la media dice el "
+        "rendimiento típico y la desviación típica, cuánto varía de un periodo a "
+        "otro. Cada fold amplía la ventana de entrenamiento y desplaza la de test "
+        "hacia adelante, de forma que el modelo nunca ve datos posteriores a los "
+        "que predice. En la figura, cada caja abarca del primer al tercer cuartil "
+        "de esos folds, con la mediana dentro y los bigotes en el mínimo y el "
+        "máximo.",
     )
 
     # ============================================================ 5. Tuning
@@ -327,6 +398,14 @@ def build(
             f"predicciones base —ruidosas para el NEE— sube el R² del NEE de ≈ 0.216 a "
             f"≈ 0.236. El F1 y el AUC quedan prácticamente iguales. Este modelo tuneado es el "
             f"que queda desplegado (is_active = true).",
+        )
+        _expl(
+            doc,
+            "Los hiperparámetros se buscan con validación interna TimeSeriesSplit(5) "
+            "aplicada SOLO al tramo de entrenamiento, de modo que el holdout de 2018 no "
+            "interviene en la búsqueda y las métricas de la sección anterior siguen "
+            "siendo válidas. La tabla recoge los valores ganadores, no el espacio "
+            "explorado.",
         )
 
     # ============================================================ 6. Pruebas estadísticas
@@ -373,6 +452,17 @@ def build(
         "estas pruebas se hicieron sobre los cinco modelos base; el modelo desplegado "
         "(Stacking tuned) es un refinamiento posterior del ganador ya seleccionado.",
     )
+    _expl(
+        doc,
+        "Los contrastes operan sobre las métricas por fold de la validación "
+        "cruzada, con los cinco modelos base y α = 0.05. Wilcoxon compara pares "
+        "emparejando fold a fold; Friedman pregunta si algún modelo difiere del "
+        "conjunto respetando ese emparejamiento; Nemenyi identifica después que "
+        "pares concretos lo explican. En el diagrama, los modelos se sitúan por "
+        "rango medio (1 = mejor) y una barra horizontal une a los que quedan a "
+        "menos de la diferencia crítica CD, es decir, a los que NO se pueden "
+        "distinguir.",
+    )
 
     # ============================================================ 7. Escenario simulado
     _h(doc, "7. Resultados del escenario simulado", 1)
@@ -406,6 +496,14 @@ def build(
             f"tendencia, no como una cifra exacta; la clase y el orden de magnitud del CH₄ "
             f"son más fiables.",
         )
+        _expl(
+            doc,
+            "El escenario fija el nivel freático objetivo y toma el resto de drivers "
+            "—meteorología y temperatura de suelo— de la climatología del día del año "
+            "correspondiente, promediada sobre 2016–2018. Por tanto es una simulación "
+            "hipotética, no la reconstrucción de un día real, y mueve una sola variable "
+            "dejando las demás congeladas.",
+        )
     except Exception as exc:  # pragma: no cover
         doc.add_paragraph(f"No se pudo ejecutar el escenario: {exc}")
 
@@ -424,6 +522,17 @@ def build(
             f"sumidero (recall = {rec_sink:.2f}). El AUC = {C.fnum(winner.auc, 3)} confirma "
             f"una buena separación entre clases; el umbral 0.5 es el punto de operación por "
             f"defecto.",
+        )
+        _expl(
+            doc,
+            "En la matriz, las filas son la clase real y las columnas la predicha, así "
+            "que la diagonal recoge los aciertos; la clase positiva es «sumidero», "
+            "definida como NEE < 0, y es la minoritaria. La curva ROC enfrenta la tasa "
+            "de falsos positivos a la de verdaderos positivos recorriendo todos los "
+            "umbrales de decisión posibles: la diagonal representa al clasificador "
+            "aleatorio y el AUC es el área bajo la curva, de modo que mide la capacidad "
+            "de ORDENAR los días por probabilidad de sumidero y no el acierto con un "
+            "umbral concreto.",
         )
 
     # ============================================================ 8. Conclusiones

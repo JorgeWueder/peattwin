@@ -37,7 +37,12 @@ def _styles():
     ss.add(ParagraphStyle("Body", parent=ss["Normal"], fontSize=9.5, leading=14, alignment=TA_JUSTIFY, textColor=_INK))
     ss.add(ParagraphStyle("Interp", parent=ss["Normal"], fontSize=9, leading=13.5, alignment=TA_JUSTIFY,
                           textColor=colors.HexColor("#3f3f46"), leftIndent=8, borderColor=_ACCENT,
-                          borderWidth=0, spaceBefore=4, spaceAfter=10))
+                          borderWidth=0, spaceBefore=4, spaceAfter=2))
+    # La explicabilidad va debajo de la interpretacion y un punto mas apagada: es
+    # el respaldo auditable, no el mensaje. Por eso el hueco inferior lo cierra
+    # ella y no la interpretacion, que ahora solo deja 2pt para pegarse a esta.
+    ss.add(ParagraphStyle("Expl", parent=ss["Interp"], fontSize=8.5, leading=12.5,
+                          textColor=_MUTE, spaceBefore=0, spaceAfter=12))
     ss.add(ParagraphStyle("Caption", parent=ss["Normal"], fontSize=8, textColor=_MUTE, spaceBefore=2, spaceAfter=2))
     return ss
 
@@ -121,6 +126,18 @@ def build(db: Session, *, site_id: int, start: date | None, end: date | None) ->
                 ss["Interp"],
             )
         )
+        story.append(
+            Paragraph(
+                "<b>Explicabilidad.</b> La curva enfrenta la tasa de falsos positivos (eje X) "
+                "a la de verdaderos positivos o recall de sumidero (eje Y), recorriendo todos "
+                "los umbrales de decisión posibles; la diagonal discontinua representa al "
+                "clasificador aleatorio. El AUC es el área bajo la curva, así que resume el "
+                "rendimiento a TODOS los umbrales: mide la capacidad de ordenar los días por "
+                "probabilidad de sumidero, no el acierto con el umbral 0.5 que usa la matriz "
+                "de confusión.",
+                ss["Expl"],
+            )
+        )
     else:
         story.append(
             Paragraph(
@@ -162,6 +179,18 @@ def build(db: Session, *, site_id: int, start: date | None, end: date | None) ->
                 ss["Interp"],
             )
         )
+        story.append(
+            Paragraph(
+                "<b>Explicabilidad.</b> Todas las filas se evalúan sobre el mismo holdout "
+                "temporal: se entrena con 2016–2017 y se mide sobre 2018 completo, sin "
+                "barajar. RMSE es un error, luego menor es mejor; R², F1 y AUC son "
+                "adimensionales y mayor es mejor. Las métricas de regresión son la media de "
+                "los dos objetivos CO₂ y CH₄, y esa media esconde un contraste grande entre "
+                "ambos, así que ninguna fila debe leerse como «calidad del modelo» sin abrir "
+                "el desglose por objetivo.",
+                ss["Expl"],
+            )
+        )
 
     story.append(PageBreak())
 
@@ -188,6 +217,18 @@ def build(db: Session, *, site_id: int, start: date | None, end: date | None) ->
                 f"falsos positivos, lo contrario. Con clases desbalanceadas (~32 % sumidero) "
                 f"esta lectura por clase es más informativa que la accuracy global.",
                 ss["Interp"],
+            )
+        )
+        story.append(
+            Paragraph(
+                "<b>Explicabilidad.</b> Las filas son la clase real y las columnas la "
+                "predicha, de modo que la diagonal recoge los aciertos. La clase positiva es "
+                "«sumidero», definida como NEE negativo, y es la minoritaria del conjunto: "
+                "con ese desbalance, un clasificador que respondiera «fuente» siempre ya "
+                "lograría una accuracy alta sin aprender nada, y por eso se reportan F1 y "
+                "recall de sumidero. Fuera de la diagonal, los falsos positivos son días que "
+                "el modelo declara sumidero sin serlo.",
+                ss["Expl"],
             )
         )
     else:

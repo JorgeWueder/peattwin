@@ -1,15 +1,33 @@
-"""Render de tablas, graficos y figuras que EXIGE una interpretacion escrita.
+"""Render de tablas, graficos y figuras que EXIGE interpretacion y explicabilidad.
 
-Regla del proyecto: ningun numero se muestra solo. Cada tabla, grafico o figura
-va acompanada de una o dos lineas que dicen que significa el resultado.
+Regla del proyecto: ningun numero se muestra solo. Y no basta con una frase: a
+cada tabla, grafico o figura le acompanan DOS bloques separados, porque son dos
+preguntas distintas y mezclarlas es lo que produce pies de figura que no dicen
+nada.
 
-Aqui esa regla es estructural, no una convencion que se olvida: `interpretacion`
-es un argumento *keyword-only* obligatorio. Una tabla sin texto no llega a
-ejecutarse.
+    Interpretacion  -> QUE SIGNIFICA. El hallazgo, la conclusion, la salvedad.
+                       Es donde se moja el autor.
+    Explicabilidad  -> POR QUE se puede afirmar eso. Que hay en los ejes, en que
+                       unidades, sobre que datos, como se calculo, como se lee.
+                       Es lo que permite auditar la afirmacion de arriba.
+
+La interpretacion va PRIMERO a proposito: es lo que el lector viene a buscar y
+lo que sostiene el argumento del articulo. La explicabilidad va debajo como
+respaldo, para quien quiera comprobar de donde sale. Separarlas obliga ademas a
+notar cuando falta una de las dos: es facil escribir «el CH4 se predice bien» y
+olvidar decir que el eje esta en nmol m-2 s-1.
+
+Aqui la regla es estructural, no una convencion que se olvida: `interpretacion`
+y `explicabilidad` son argumentos *keyword-only* obligatorios. Una tabla sin las
+dos no llega a ejecutarse.
 
     from ui import interpret as I
 
-    I.tabla(df, interpretacion="Shapiro rechaza normalidad en las 10 series...")
+    I.tabla(
+        df,
+        interpretacion="Ninguna pasa el contraste, de ahi que todo lo que sigue...",
+        explicabilidad="Shapiro-Wilk y D'Agostino sobre las 10 series clave...",
+    )
 """
 from __future__ import annotations
 
@@ -18,22 +36,49 @@ from typing import Any, Iterable
 
 import pandas as pd
 import streamlit as st
+from pandas.io.formats.style import Styler
+
+# Contador para dar una `key` distinta a cada bloque. Streamlit convierte esa
+# key en una clase `st-key-<key>` del DOM, y el CSS de `ui/theme.py` engancha
+# ahi (`[class*="st-key-ptnota"]`). Antes el estilo se colgaba de «contenedor
+# con borde cuyo unico hijo es un caption», que dejo de ser cierto al pasar de
+# uno a dos captions: un ancla explicita no se rompe al cambiar el contenido.
+_contador = 0
 
 
-def _nota(texto: str) -> None:
-    """Bloque de interpretacion, con el mismo aspecto en toda la seccion.
+def _key() -> str:
+    global _contador
+    _contador += 1
+    return f"ptnota{_contador}"
+
+
+def _bloque(interpretacion: str, explicabilidad: str) -> None:
+    """Las dos partes, en un contenedor propio y visiblemente separadas.
 
     Se usa un contenedor nativo y no un `<div>` con `unsafe_allow_html`: dentro
     de HTML crudo Streamlit no interpreta Markdown y el `**negrita**` o los
-    `codigos` de las interpretaciones saldrian con los asteriscos a la vista.
+    `codigos` de los textos saldrian con los asteriscos a la vista.
     """
-    with st.container(border=True):
-        st.caption(texto)
+    with st.container(border=True, key=_key()):
+        st.caption(f"**Interpretacion.** {interpretacion}")
+        st.caption(f"**Explicabilidad.** {explicabilidad}")
 
 
 def nota(texto: str) -> None:
-    """Interpretacion suelta, para contenido que no pasa por los helpers de arriba."""
-    _nota(texto)
+    """Anotacion suelta de una sola parte.
+
+    Para comentarios que NO acompanan a una tabla ni a una figura concreta (un
+    aviso de trazabilidad, una lectura que cruza dos graficos ya explicados).
+    Todo lo que cuelgue de un dato usa los helpers de abajo, que exigen las dos
+    partes.
+    """
+    with st.container(border=True, key=_key()):
+        st.caption(texto)
+
+
+def doble(interpretacion: str, explicabilidad: str) -> None:
+    """Las dos partes para contenido que no pasa por los helpers de abajo."""
+    _bloque(interpretacion, explicabilidad)
 
 
 def titulo(texto: str, *, ayuda: str | None = None) -> None:
@@ -43,33 +88,60 @@ def titulo(texto: str, *, ayuda: str | None = None) -> None:
 
 
 def tabla(
-    df: pd.DataFrame,
+    df: pd.DataFrame | Styler,
     *,
     interpretacion: str,
+    explicabilidad: str,
     formato: dict[str, str] | None = None,
     altura: int | None = None,
     indice: bool = False,
 ) -> None:
-    """Tabla + su interpretacion. `interpretacion` es obligatoria."""
-    if df is None or df.empty:
+    """Tabla + sus dos bloques. Ambos son obligatorios.
+
+    Admite tambien un `Styler` ya construido, para las tablas que necesitan
+    resaltar filas (`df.style.apply(...)`). Sin esto, esas tablas tendrian que
+    llamar a `st.dataframe` por su cuenta y se saldrian de la garantia: el punto
+    de este modulo es que no exista una via de escape comoda.
+    """
+    datos_df = df.data if isinstance(df, Styler) else df
+    if datos_df is None or datos_df.empty:
         st.info("Sin datos para mostrar.")
-        _nota(interpretacion)
+        _bloque(interpretacion, explicabilidad)
         return
-    datos: Any = df.style.format(formato, na_rep="—") if formato else df
+
+    datos: Any = df
+    if formato:
+        # `Styler.format` es acumulable, asi que se puede encadenar sobre uno
+        # que ya traiga `.apply()` sin perder el resaltado.
+        datos = df.format(formato, na_rep="—") if isinstance(df, Styler) \
+            else df.style.format(formato, na_rep="—")
+
     # `height` solo se pasa si se pidio: Streamlit rechaza height=None.
     extra = {"height": altura} if altura else {}
     st.dataframe(datos, width="stretch", hide_index=not indice, **extra)
-    _nota(interpretacion)
+    _bloque(interpretacion, explicabilidad)
 
 
-def grafico(chart, *, interpretacion: str) -> None:
-    """Grafico Altair + su interpretacion."""
+def grafico(chart, *, interpretacion: str, explicabilidad: str) -> None:
+    """Grafico Altair + sus dos bloques."""
     st.altair_chart(chart, width="stretch")
-    _nota(interpretacion)
+    _bloque(interpretacion, explicabilidad)
 
 
-def figura(path: Path, *, titulo_fig: str, interpretacion: str, comando: str = "") -> None:
-    """Figura PNG del pipeline. Si falta, explica como regenerarla en vez de fallar."""
+def figura(
+    path: Path,
+    *,
+    titulo_fig: str,
+    interpretacion: str,
+    explicabilidad: str,
+    comando: str = "",
+) -> None:
+    """Figura PNG del pipeline. Si falta, explica como regenerarla en vez de fallar.
+
+    Los dos bloques se muestran aunque la imagen no este: describen un resultado
+    que existe en el CSV correspondiente, y ocultarlos dejaria al lector sin
+    saber siquiera que deberia haber ahi.
+    """
     st.markdown(f"**{titulo_fig}**")
     if path.exists():
         st.image(str(path), width="stretch")
@@ -78,17 +150,19 @@ def figura(path: Path, *, titulo_fig: str, interpretacion: str, comando: str = "
         if comando:
             aviso += f" Se genera con `{comando}`."
         st.info(aviso)
-    _nota(interpretacion)
+    _bloque(interpretacion, explicabilidad)
 
 
-def metricas(items: Iterable[tuple[str, Any]], *, interpretacion: str) -> None:
-    """Fila de `st.metric` + su interpretacion."""
+def metricas(
+    items: Iterable[tuple[str, Any]], *, interpretacion: str, explicabilidad: str
+) -> None:
+    """Fila de `st.metric` + sus dos bloques."""
     items = list(items)
     if not items:
         return
     for columna, (etiqueta, valor) in zip(st.columns(len(items)), items):
         columna.metric(etiqueta, valor)
-    _nota(interpretacion)
+    _bloque(interpretacion, explicabilidad)
 
 
 def texto_md(contenido: str | None, *, vacio: str = "Resumen no disponible.") -> None:

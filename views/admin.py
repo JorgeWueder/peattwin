@@ -12,6 +12,7 @@ from app.schemas.auth import UserAdminUpdate
 from app.services import access, rbac_service
 from ui import auth
 from ui import format as F
+from ui import interpret as I
 from ui.db import session_scope
 
 
@@ -55,6 +56,67 @@ def _save(user_id: int, role_ids: list[int], is_active: bool) -> None:
         )
 
 
+# ---------------------------------------------------------------- lecturas
+# Tambien aqui: la regla del proyecto es que ninguna tabla se muestre sin decir
+# que hay que mirar en ella. En un panel de administracion lo relevante no es el
+# contenido de una fila sino el estado agregado del control de acceso, que es lo
+# que puede estar mal sin que salte ningun error.
+
+def _lectura_usuarios(users: list[dict]) -> str:
+    total = len(users)
+    activos = sum(1 for u in users if u["is_active"])
+    sin_rol = [u["username"] for u in users if not u["role_names"]]
+    superusers = [u["username"] for u in users if u["is_superuser"]]
+    admins = [u["username"] for u in users if "admin" in u["role_names"]]
+    nunca = sum(1 for u in users if not u["last_login_at"])
+
+    avisos = []
+    if sin_rol:
+        avisos.append(
+            f"{len(sin_rol)} cuenta(s) sin ningun rol (@{', @'.join(sin_rol)}): pueden "
+            "iniciar sesion pero no veran mas que las vistas publicas, porque toda la "
+            "navegacion se filtra por permisos."
+        )
+    if len(admins) <= 1:
+        avisos.append(
+            "Solo hay una cuenta con rol admin: si se desactiva o se pierde su clave, "
+            "nadie podra volver a asignar roles desde la interfaz."
+        )
+    if len(superusers) > 1:
+        avisos.append(
+            f"Hay {len(superusers)} superusers (@{', @'.join(superusers)}); el flag "
+            "salta el chequeo de permisos, asi que conviene que sea excepcional."
+        )
+    cola = " " + " ".join(avisos) if avisos else (
+        " No hay cuentas huerfanas de rol ni superusers de mas."
+    )
+    return (
+        f"{total} cuenta(s), {activos} activa(s) y {total - activos} desactivada(s); "
+        f"{nunca} no ha iniciado sesion nunca. El acceso efectivo no lo da esta tabla sino "
+        "la columna Roles: los permisos se heredan del rol, nunca se asignan a la persona, "
+        f"y el flag Superuser se salta esa comprobacion entera.{cola}"
+    )
+
+
+def _lectura_permisos(permissions: list[dict], roles: list[dict]) -> str:
+    usados = {c for r in roles for c in r["permissions"]}
+    huerfanos = sorted({p["code"] for p in permissions} - usados)
+    cola = (
+        f" {len(huerfanos)} permiso(s) no estan en ningun rol ({', '.join(huerfanos)}): "
+        "estan definidos pero hoy nadie los tiene, asi que la funcionalidad que protegen "
+        "esta cerrada para todo el mundo."
+        if huerfanos
+        else " Todos los permisos estan asignados a algun rol; no hay codigos muertos."
+    )
+    return (
+        f"Los {len(permissions)} codigos de permiso que entiende la aplicacion, sembrados "
+        "en la migracion 0002. Se leen en pareja con la columna de Roles de la izquierda: "
+        "esta tabla dice que existe y el panel de roles dice quien lo tiene. El formato "
+        "`recurso:accion` es el que comprueban `auth.has_permission()` en las vistas y "
+        f"`rbac_service` en la capa de servicio, con doble guarda.{cola}"
+    )
+
+
 def _restricted_notice() -> None:
     user = auth.current_user()
     roles = ", ".join(user.role_names) if user and user.role_names else "sin rol"
@@ -83,12 +145,12 @@ def render() -> None:
     role_by_id = {r["id"]: r["name"] for r in roles}
     current = auth.current_user()
 
-    st.subheader("Usuarios")
+    I.titulo("Usuarios")
     if not users:
         st.info("No hay usuarios.")
         return
 
-    st.dataframe(
+    I.tabla(
         pd.DataFrame(
             [
                 {
@@ -103,8 +165,14 @@ def render() -> None:
                 for u in users
             ]
         ),
-        width="stretch",
-        hide_index=True,
+        explicabilidad=(
+            "Todas las cuentas de la tabla `users`. «Roles» lista los roles asignados, "
+            "que son los que conceden permisos; «Estado» distingue una cuenta activa de "
+            "una desactivada, que existe pero no puede iniciar sesion; «Superuser» es un "
+            "flag que salta la comprobacion de permisos por completo. «Ultimo acceso» "
+            "queda vacio si la cuenta nunca ha entrado."
+        ),
+        interpretacion=_lectura_usuarios(users),
     )
 
     st.subheader("Editar un usuario")
@@ -160,12 +228,16 @@ def render() -> None:
                 st.code(" ".join(r["permissions"]) or "—", language=None)
 
     with col_perms:
-        st.subheader("Permisos")
-        st.caption("Referencia de codigos de permiso.")
-        st.dataframe(
+        I.titulo("Permisos")
+        I.tabla(
             pd.DataFrame(
                 [{"Codigo": p["code"], "Descripcion": p["description"]} for p in permissions]
             ),
-            width="stretch",
-            hide_index=True,
+            explicabilidad=(
+                "Catalogo de codigos de permiso que reconoce la aplicacion, sembrados "
+                "por la migracion 0002. El formato es `recurso:accion`. Esta tabla dice "
+                "que permisos EXISTEN; el panel de Roles de la izquierda dice quien los "
+                "tiene."
+            ),
+            interpretacion=_lectura_permisos(permissions, roles),
         )
