@@ -76,6 +76,13 @@ def _eda() -> None:
 
     I.tabla(
         desc,
+        explicabilidad=(
+            "Estadisticos de posicion, dispersion y forma de las 8 variables clave "
+            "sobre los 1096 dias de la serie diaria de DE-Zrk (2016-2018). `n` es el "
+            "numero de dias con dato; media y mediana van en la unidad de cada "
+            "variable (NEE en gC m⁻² d⁻¹, FCH₄ en nmol m⁻² s⁻¹, TS en °C); la "
+            "asimetria y la curtosis de exceso valen 0 en una normal."
+        ),
         interpretacion=(
             "El NEE tiene media casi nula (0.05 gC m⁻² d⁻¹) pero mediana positiva "
             "(0.28): el sitio es fuente la mayor parte del ano y sumidero en pulsos "
@@ -87,6 +94,13 @@ def _eda() -> None:
 
     I.tabla(
         A.outliers(),
+        explicabilidad=(
+            "Recuento de valores extremos por el criterio de rango intercuartilico: se "
+            "marcan los que caen fuera de Q1 − k·IQR y Q3 + k·IQR, con k = 1.5 (criterio "
+            "habitual) y k = 3.0 (solo extremos severos). `pct_1.5` y `pct_3.0` son el "
+            "porcentaje de dias marcados. La ultima columna cuenta cuantos valores "
+            "recortaria una winsorizacion a k = 3."
+        ),
         interpretacion=(
             "Con el criterio IQR 1.5 el NEE tiene un 8.85 % de extremos y el FCH₄ un "
             "1.37 %. No se eliminan: son senal geofisica real (pulsos de emision, olas "
@@ -107,6 +121,15 @@ def _eda() -> None:
     else:
         I.grafico(
             charts.heatmap(corr, dominio=(-1, 1), titulo_valor="r"),
+            explicabilidad=(
+                f"Matriz de correlacion de {metodo.capitalize()} entre las variables "
+                "clave. Cada celda es el coeficiente r del par fila-columna, de −1 "
+                "(relacion inversa perfecta) a +1 (directa perfecta), con 0 en el "
+                "centro de la escala de color. Pearson mide relacion LINEAL; Spearman "
+                "opera sobre los rangos y capta cualquier relacion monotona, lo que la "
+                "hace robusta a los extremos del FCH₄. La diagonal vale 1 por "
+                "definicion y la matriz es simetrica."
+            ),
             interpretacion=(
                 f"Correlacion de {metodo.capitalize()} entre las 15 variables clave. "
                 "El FCH₄ va de la mano de la temperatura del suelo, y el NEE se explica "
@@ -118,6 +141,14 @@ def _eda() -> None:
 
     I.tabla(
         A.normalidad(),
+        explicabilidad=(
+            "Dos contrastes de normalidad sobre cada serie: Shapiro-Wilk (estadistico W, "
+            "tanto mas cercano a 1 cuanto mas normal) y D'Agostino-Pearson (K², que "
+            "combina asimetria y curtosis). La hipotesis nula de ambos es que los datos "
+            "proceden de una normal, asi que un p pequeno la RECHAZA. Se incluyen "
+            "tambien los residuos de la descomposicion STL, para separar la no "
+            "normalidad propia de la variable de la que induce la estacionalidad."
+        ),
         interpretacion=(
             "Shapiro-Wilk y D'Agostino rechazan la normalidad en las 10 series "
             "(p < 1e-25 en los objetivos). De ahi que la comparacion entre modelos use "
@@ -134,6 +165,14 @@ def _eda() -> None:
         I.figura(
             A.EDA_FIG / "07_descomposicion_STL_NEE.png",
             titulo_fig="Descomposicion STL del NEE",
+            explicabilidad=(
+                "Descomposicion STL (Seasonal-Trend decomposition using LOESS) de la "
+                "serie de NEE en tres paneles apilados: tendencia (movimiento lento "
+                "plurianual), componente estacional (el ciclo que se repite cada ano) y "
+                "residuo (lo que no explica ninguna de las dos). Las tres se suman para "
+                "reconstruir la serie original, y comparar sus amplitudes dice cual "
+                "manda."
+            ),
             interpretacion=(
                 "La componente estacional domina sobre la tendencia: el balance de "
                 "carbono lo manda el ciclo anual, no una deriva plurianual."
@@ -144,6 +183,12 @@ def _eda() -> None:
         I.figura(
             A.EDA_FIG / "09_climatologia_dia_del_anio.png",
             titulo_fig="Climatologia del dia del ano",
+            explicabilidad=(
+                "Valor medio de cada driver para cada uno de los 366 dias del ano, "
+                "promediando los tres anos de registro con una ventana circular de 15 "
+                "dias (circular: el 31 de diciembre es vecino del 1 de enero). El eje X "
+                "es el dia del ano, no una fecha concreta."
+            ),
             interpretacion=(
                 "Es la curva que usa el simulador para los drivers que el usuario no "
                 "fija: media 2016-2018 con ventana circular de 15 dias."
@@ -172,6 +217,12 @@ def _entrenamiento() -> None:
             ("Train (2016-17)", "702 dias"),
             ("Test (2018)", "365 dias"),
         ],
+        explicabilidad=(
+            "Dimensiones del experimento de entrenamiento: cuantos modelos se comparan, "
+            "cuantas variables de entrada recibe cada uno tras la ingenieria de features "
+            "(retardos, medias moviles y terminos estacionales incluidos) y como se "
+            "reparten los 1067 dias utiles entre el tramo de entrenamiento y el de test."
+        ),
         interpretacion=(
             "El holdout es TEMPORAL, no aleatorio: se entrena con 2016-2017 y se valida "
             "con 2018 completo, sin barajar. Un split aleatorio filtraria el futuro "
@@ -193,6 +244,13 @@ def _entrenamiento() -> None:
     )
     I.tabla(
         ficha,
+        explicabilidad=(
+            "Ficha de identidad de los cinco modelos: familia (clasico o hibrido), "
+            "libreria con la que esta implementado y segundos de reloj que costo "
+            "entrenarlo sobre el tramo 2016-2017. El tiempo es de una sola corrida en "
+            "esta maquina, asi que vale para comparar ordenes de magnitud entre modelos, "
+            "no como medida de rendimiento absoluto."
+        ),
         interpretacion=(
             "Tres clasicos (Random Forest, XGBoost, SVR/SVM) y dos hibridos (CNN-LSTM "
             "en Keras/TensorFlow y Stacking Ensemble). El coste de entrenamiento varia "
@@ -245,6 +303,15 @@ def _comparativa() -> None:
 
     I.tabla(
         tabla,
+        explicabilidad=(
+            f"Metricas de los cinco modelos para UN solo objetivo ({objetivo}), medidas "
+            f"sobre el holdout de 2018 y ordenadas por score combinado. RMSE y MAE van "
+            f"en {unidad} y son errores: menor es mejor. R² y NSE son adimensionales y "
+            "valen 1 en la prediccion perfecta, 0 si el modelo iguala a predecir la "
+            "media y negativo si la empeora. F1 macro y AUC son de la tarea de "
+            "clasificacion, comunes a ambos objetivos, y por eso se repiten al cambiar "
+            "el selector."
+        ),
         interpretacion=(
             f"Metricas de {objetivo} en 2018. El R² del NEE se mueve entre 0.16 y 0.24 "
             "mientras el del FCH₄ llega a 0.84: un orden de magnitud de diferencia. "
@@ -266,6 +333,13 @@ def _comparativa() -> None:
     I.grafico(
         charts.barras_agrupadas(largo, x="Modelo", y="R²", color="Objetivo",
                                 titulo_y="R² en el holdout 2018"),
+        explicabilidad=(
+            "Barras agrupadas: para cada modelo del eje X, dos barras con el R² que "
+            "alcanza en NEE (CO₂) y en FCH4 (CH₄) sobre el holdout de 2018. El eje Y es "
+            "adimensional y mas alto es mejor. Al estar ambos objetivos en la misma "
+            "escala, la altura relativa de las dos barras de un mismo modelo es lo que "
+            "hay que mirar."
+        ),
         interpretacion=(
             "La brecha entre objetivos se mantiene en los cinco algoritmos: no es un "
             "problema de modelo sino de informacion disponible. La excepcion es el "
@@ -284,6 +358,13 @@ def _comparativa() -> None:
             ),
             x="Modelo", y="Valor", color="Metrica", titulo_y="Clasificacion sumidero/fuente",
         ),
+        explicabilidad=(
+            "Las dos metricas de clasificacion binaria sumidero/fuente para cada modelo. "
+            "F1 macro promedia el F1 de las dos clases dandoles el mismo peso, de modo "
+            "que la clase minoritaria no se diluye; AUC mide la capacidad de ordenar los "
+            "dias por probabilidad de sumidero y vale 0.5 en el azar. Ambas van de 0 a 1 "
+            "y mas alto es mejor."
+        ),
         interpretacion=(
             "En clasificacion los cinco quedan muy juntos (AUC 0.86-0.92). Por eso el "
             "criterio de seleccion pondera regresion y clasificacion al 50 % y usa "
@@ -295,9 +376,21 @@ def _comparativa() -> None:
     I.figura(
         A.TRAIN_FIG / "heatmap_comparativo_metricas.png",
         titulo_fig="Heatmap comparativo (todas las metricas normalizadas)",
+        explicabilidad=(
+            "Una fila por modelo y una columna por metrica. Cada COLUMNA se normaliza "
+            "min-max por separado, de forma que el mejor valor de esa metrica queda en "
+            "verde y el peor en rojo con independencia de su magnitud real; en las "
+            "metricas de error el sentido se invierte antes de colorear, para que verde "
+            "signifique siempre «mejor». Los numeros impresos son los valores "
+            "normalizados, no las metricas originales."
+        ),
         interpretacion=(
-            "Verde = mejor, rojo = peor, normalizado min-max por columna. El Stacking "
-            "domina en conjunto sin ser el mejor en ninguna metrica aislada."
+            "Muestra el ORDEN relativo, nunca la magnitud: un verde intenso puede "
+            "corresponder a un R² mediocre si todos los modelos lo son en esa columna, "
+            "que es justo lo que pasa con el NEE. Leida asi, la figura dice que el "
+            "Stacking domina en CONJUNTO sin ser el mejor en casi ninguna metrica "
+            "aislada, y esa es la razon de que haga falta un criterio de seleccion "
+            "explicito en vez de elegir por la mejor columna."
         ),
         comando=_CMD_TRAIN,
     )
@@ -361,6 +454,13 @@ def _prediccion() -> None:
                 ("CH₄ · FCH4 (nmol m⁻² s⁻¹)", F.fmt(res.fch4, 1)),
                 ("Balance", res.clase.capitalize()),
             ],
+            explicabilidad=(
+                "Salida del modelo elegido para las condiciones fijadas a la izquierda: "
+                "flujo de CO₂ (NEE, en gC m⁻² d⁻¹, negativo = captura), flujo de CH₄ "
+                "(FCH4, en nmol m⁻² s⁻¹, siempre positivo) y la clase de balance que "
+                "predice el clasificador. Los drivers que no se hayan marcado proceden "
+                "de la climatologia de ese dia del ano, no de una medida real."
+            ),
             interpretacion=(
                 f"P(sumidero) = {F.fmt(res.proba_sumidero, 3)} segun el clasificador; "
                 f"por el signo del NEE seria «{res.clase_por_signo}». Cuando ambos "
@@ -383,14 +483,27 @@ def _mejor_modelo() -> None:
         return
 
     m = meta.get("metrics_holdout") or meta.get("metrics_winner") or {}
+
+    # El nombre del ganador NO va en la tira de metricas. Una tira de metricas
+    # es una fila de instrumentos: columnas iguales y valores en mono tabular,
+    # que es lo correcto para cifras y lo peor posible para un nombre propio
+    # largo. «Stacking Ensemble (tuned)» pedia 298px en una columna de 173px.
+    # Va como encabezado, donde dispone del ancho completo.
+    st.markdown(f"#### {meta.get('winner', '—')}")
+
     I.metricas(
         [
-            ("Ganador", meta.get("winner", "—")),
             ("Score combinado", F.fmt(meta.get("combined_score"), 4)),
             ("R² NEE", F.fmt(m.get("nee_r2"), 3)),
             ("R² FCH₄", F.fmt(m.get("fch4_r2"), 3)),
             ("AUC", F.fmt(m.get("auc"), 3)),
         ],
+        explicabilidad=(
+            "Tarjeta del modelo desplegado, leida de `modelo_final_metadata.json`. El "
+            "score combinado es el criterio unico con el que se eligio entre los cinco "
+            "candidatos; los tres siguientes son sus metricas en el holdout de 2018, en "
+            "bruto y sin normalizar: R² de cada objetivo y AUC de la clasificacion."
+        ),
         interpretacion=(
             f"Criterio: `{meta.get('criterio', '—')}`. Mitad regresion (R² medio de los "
             "dos objetivos, normalizado min-max entre modelos) y mitad clasificacion "
@@ -404,6 +517,13 @@ def _mejor_modelo() -> None:
             charts.barras_horizontales(pesos, etiqueta="modelo_base", valor="peso",
                                        titulo_x="Coeficiente del meta-modelo Ridge",
                                        altura=180),
+            explicabilidad=(
+                "Coeficientes que el meta-modelo Ridge asigna a cada uno de los tres "
+                "modelos base del Stacking. El Ridge recibe como entrada las "
+                "predicciones de las bases y aprende con que peso combinarlas; un "
+                "coeficiente mayor significa que esa base influye mas en la prediccion "
+                "final. Las barras van ordenadas de mayor a menor."
+            ),
             interpretacion=(
                 "Como combina el ensemble a sus tres bases. El Ridge reparte el peso "
                 "casi por igual entre Random Forest y SVR y castiga a XGBoost: el "
@@ -417,6 +537,14 @@ def _mejor_modelo() -> None:
         I.grafico(
             charts.barras_horizontales(imp, etiqueta="variable", valor="importancia",
                                        titulo_x="Importancia (Random Forest base)"),
+            explicabilidad=(
+                "Las 15 variables mas importantes segun el Random Forest base del "
+                "ensemble. La importancia es la de scikit-learn por reduccion media de "
+                "impureza: suma 1 entre todas las features y mide cuanto contribuye cada "
+                "una a separar los nodos de los arboles. Es una medida RELATIVA y "
+                "conocida por favorecer a las variables continuas con muchos valores "
+                "distintos, asi que ordena bien pero no cuantifica un efecto causal."
+            ),
             interpretacion=(
                 "Importancia del Random Forest base del ensemble —el Stacking como tal "
                 "no expone importancias globales, asi que esto es una aproximacion. "
@@ -435,6 +563,14 @@ def _mejor_modelo() -> None:
                     {"": "Real sumidero", "Pred. fuente": fn, "Pred. sumidero": tp},
                 ]
             ),
+            explicabilidad=(
+                "Matriz de confusion del modelo desplegado sobre los 365 dias de 2018. "
+                "Las filas son la clase real y las columnas la predicha, asi que la "
+                "diagonal son los aciertos. La clase positiva es «sumidero» (NEE < 0), "
+                "que es la minoritaria. Fuera de la diagonal: arriba a la derecha, dias "
+                "fuente que el modelo llama sumidero (falsos positivos); abajo a la "
+                "izquierda, dias sumidero que se le escapan (falsos negativos)."
+            ),
             interpretacion=(
                 f"De los {tp + fn} dias sumidero de 2018 detecta {tp} "
                 f"(recall {tp / (tp + fn):.0%}), a cambio de {fp} falsas alarmas. Para "
@@ -447,12 +583,39 @@ def _mejor_modelo() -> None:
     with izq:
         I.figura(A.TRAIN_FIG / "matrices_confusion.png",
                  titulo_fig="Matrices de confusion (holdout 2018)",
-                 interpretacion="Clase positiva = sumidero, la minoritaria (~32 %).",
+                 explicabilidad=(
+                     "Una matriz por modelo, todas sobre el mismo holdout de 2018 y con "
+                     "la misma disposicion que la tabla de arriba: filas = clase real, "
+                     "columnas = predicha, diagonal = aciertos. Debajo de cada matriz se "
+                     "imprimen F1 y recall de la clase sumidero."
+                 ),
+                 interpretacion=(
+                     "Permite comparar de un vistazo COMO se equivoca cada modelo, no "
+                     "solo cuanto. Con un 32 % de sumidero, un clasificador que "
+                     "respondiera «fuente» siempre ya lograria ~68 % de accuracy sin "
+                     "aprender nada, y por eso debajo van F1 y recall y no la accuracy. "
+                     "Para restauracion el error caro son los falsos positivos: "
+                     "sobreestiman el beneficio de una intervencion."
+                 ),
                  comando=_CMD_TRAIN)
     with der:
         I.figura(A.TRAIN_FIG / "curvas_roc_comparacion.png",
                  titulo_fig="Curvas ROC",
-                 interpretacion="AUC entre 0.85 (CNN-LSTM) y 0.92 (Stacking).",
+                 explicabilidad=(
+                     "Las cinco curvas ROC sobre unos mismos ejes: tasa de falsos "
+                     "positivos en X frente a tasa de verdaderos positivos (recall de "
+                     "sumidero) en Y, recorriendo todos los umbrales de decision "
+                     "posibles. La diagonal es el clasificador al azar y el AUC es el "
+                     "area bajo cada curva."
+                 ),
+                 interpretacion=(
+                     "El AUC va de 0.85 (CNN-LSTM) a 0.92 (Stacking): las cinco curvas "
+                     "quedan muy juntas y por encima de la diagonal. Al resumir TODOS "
+                     "los umbrales, el AUC mide la capacidad de ordenar dias por "
+                     "probabilidad de sumidero y no el acierto con el umbral 0.5 que usa "
+                     "la matriz de confusion; un margen tan estrecho es lo que obliga a "
+                     "comprobar en las pruebas estadisticas si la diferencia es real."
+                 ),
                  comando=_CMD_TRAIN)
 
 
@@ -527,6 +690,12 @@ def _reentrenar() -> None:
         ).sort_values("Combinado", ascending=False)
         I.tabla(
             tabla,
+            explicabilidad=(
+                "Resultado de la corrida que se acaba de lanzar desde este panel, no de "
+                "los artefactos en disco. Una fila por modelo con los errores y el R² de "
+                "cada objetivo por separado, el score combinado que decide y una estrella "
+                "en el ganador. Ordenada por score combinado descendente."
+            ),
             interpretacion=(
                 f"Resultado de la corrida ({guardado['segundos']:.0f} s). Ganador: "
                 f"**{guardado['ganador']}**. Las metricas son de regresion por objetivo "
@@ -565,7 +734,17 @@ def _logs() -> None:
         diag = ("Todas las etapas estan al dia: cada artefacto es posterior al parquet "
                 "del dataset, asi que los resultados que muestra esta seccion "
                 "corresponden a los datos actuales.")
-    I.tabla(proc, interpretacion=diag)
+    I.tabla(
+        proc,
+        explicabilidad=(
+            "Inventario de los artefactos que produce el pipeline: para cada uno, su "
+            "ruta, la fecha del fichero y un estado calculado comparando esa fecha con "
+            "la del parquet del dataset. «al dia» = posterior al parquet; «desfasado» = "
+            "anterior, luego se calculo con datos mas viejos; «falta» = no esta en "
+            "disco. La ultima columna da el comando que lo regenera."
+        ),
+        interpretacion=diag,
+    )
 
     st.markdown("#### Logs de ejecucion")
     ficheros = A.logs_disponibles()
@@ -620,6 +799,13 @@ def _validacion_cruzada() -> None:
     )
     I.tabla(
         tabla,
+        explicabilidad=(
+            "Resumen de la validacion cruzada temporal: media ± desviacion tipica de "
+            "cada metrica a lo largo de los folds de `TimeSeriesSplit`. Cada fold amplia "
+            "la ventana de entrenamiento y desplaza la de test hacia adelante, sin "
+            "barajar nunca. La media dice como de bien va el modelo; la desviacion, "
+            "como de constante es de un periodo a otro."
+        ),
         interpretacion=(
             "Media ± desviacion tipica sobre los folds. La desviacion del R² de NEE "
             "(±0.15 a ±0.33) es MAYOR que la diferencia entre modelos: por eso la "
@@ -635,6 +821,13 @@ def _validacion_cruzada() -> None:
                   "R² NEE": r["r2_nee"]} for _, r in por_fold.iterrows()]
             ),
             modelo="Modelo", valor="R² NEE", titulo_y="R² de NEE por fold",
+        ),
+        explicabilidad=(
+            "Un diagrama de caja por modelo con los R² de NEE obtenidos en cada fold. "
+            "La caja abarca del primer al tercer cuartil, la linea interior es la "
+            "mediana y los bigotes llegan al minimo y al maximo observados. Con pocos "
+            "folds cada caja resume muy pocos puntos, asi que se lee como dispersion "
+            "orientativa y no como una distribucion bien estimada."
         ),
         interpretacion=(
             "Dispersion real entre folds. Las cajas se solapan casi por completo: "
@@ -653,6 +846,12 @@ def _validacion_cruzada() -> None:
                      "rmse_fch4": "RMSE FCH₄", "r2_fch4": "R² FCH₄",
                      "f1_macro": "F1 macro", "auc": "AUC"}
         ),
+        explicabilidad=(
+            f"Metricas de los cinco modelos en el fold {fold} por separado, sin "
+            "promediar. Permite ver de donde sale la media y la desviacion de la tabla "
+            "anterior: cada fold corresponde a un tramo temporal distinto, con mas "
+            "historico de entrenamiento cuanto mayor es su numero."
+        ),
         interpretacion=(
             f"Fold {fold} aislado. Los folds tempranos entrenan con menos historico, "
             "asi que sus metricas suelen ser peores: es el comportamiento esperado de "
@@ -664,8 +863,19 @@ def _validacion_cruzada() -> None:
 
     I.figura(A.TRAIN_FIG / "cv_boxplots_estabilidad.png",
              titulo_fig="Estabilidad entre folds",
-             interpretacion="Version del pipeline de la misma comparacion, con todas "
-                            "las metricas a la vez.",
+             explicabilidad=(
+                 "Version que genera el pipeline de la misma comparacion: un panel por "
+                 "metrica y, dentro de cada uno, un diagrama de caja por modelo con sus "
+                 "valores a lo largo de los folds. Frente al grafico interactivo de "
+                 "arriba, que muestra solo el R² del NEE, esta trae todas las metricas a "
+                 "la vez y entra tal cual en el informe."
+             ),
+             interpretacion=(
+                 "La altura de cada caja es la inestabilidad del modelo entre periodos. "
+                 "Sirve para comprobar que el solapamiento no es cosa de una metrica "
+                 "concreta: se repite en casi todas, que es el argumento de fondo para "
+                 "no elegir ganador comparando medias."
+             ),
              comando=_CMD_CV)
 
 
@@ -685,6 +895,14 @@ def _hiperparametros() -> None:
             I.tabla(
                 pd.DataFrame.from_records(
                     [{"Hiperparametro": k, "Valor": str(v)} for k, v in valores.items()]
+                ),
+                explicabilidad=(
+                    "Valores definitivos de los hiperparametros del bloque de "
+                    f"{titulo_bloque.lower()}, tal como quedaron fijados tras el ajuste "
+                    "fino y como se guardaron en `modelo_final_metadata.json`. No son "
+                    "los valores probados durante la busqueda, sino los ganadores: el "
+                    "espacio explorado esta en el resumen del tuning, al final de esta "
+                    "subseccion."
                 ),
                 interpretacion=(
                     "Arboles poco profundos y tasa de aprendizaje baja (0.03) en "
@@ -726,6 +944,14 @@ def _hiperparametros() -> None:
     if filas:
         I.tabla(
             pd.DataFrame.from_records(filas),
+            explicabilidad=(
+                "Comparacion directa de cada modelo antes y despues del ajuste de "
+                "hiperparametros, emparejando cada version «(tuned)» con su original. "
+                "La columna Δ es la diferencia tuned − base del R² de NEE, asi que un "
+                "valor positivo indica mejora. Las dos ultimas columnas hacen lo mismo "
+                "con el score combinado, que es el criterio que decide si el modelo "
+                "ajustado sustituye al original."
+            ),
             interpretacion=(
                 "Efecto real del tuning. En el Stacking el R² de NEE sube de 0.216 a "
                 "0.236 (+0.020) y el score combinado de 0.907 a 0.935. En XGBoost el "
@@ -740,6 +966,56 @@ def _hiperparametros() -> None:
 
 
 # =================================================== 10 · Pruebas estadisticas
+# Dos diccionarios en paralelo, con las mismas claves: la explicabilidad dice que
+# prueba es y que hipotesis contrasta; la interpretacion, que salio y que se
+# concluye. Mezclarlas producia pies en los que el lector no sabia donde acababa
+# el metodo y empezaba la opinion.
+_EXPLICABILIDAD_SECCION = {
+    "1-normalidad-RMSE": (
+        "Shapiro-Wilk aplicado a dos cosas distintas: la distribucion de RMSE de cada "
+        "modelo a lo largo de los 5 folds, y la de las diferencias pareadas frente al "
+        "modelo de referencia. La hipotesis nula es que los datos son normales, asi que "
+        "`normal_alpha05 = SI` significa que NO se rechaza. De este resultado depende la "
+        "rama que toma el resto de la bateria: parametrica o no parametrica."
+    ),
+    "1-normalidad-F1": (
+        "El mismo contraste de Shapiro-Wilk sobre el F1 macro en vez del RMSE, con la "
+        "misma lectura: W cerca de 1 y p alto indican compatibilidad con la normal."
+    ),
+    "2-pareada-RMSE": (
+        "Comparacion uno a uno del modelo de referencia (Stacking Ensemble) contra cada "
+        "uno de los otros cuatro, emparejando fold a fold. Al haberse rechazado la "
+        "normalidad se usa Wilcoxon signed-rank, que trabaja con los rangos de las "
+        "diferencias y no con sus valores. `p_holm` corrige por las 4 comparaciones "
+        "simultaneas mediante el metodo de Holm, y es la columna que hay que mirar."
+    ),
+    "2-pareada-F1": (
+        "La misma prueba de Wilcoxon con correccion de Holm, aplicada al F1 macro."
+    ),
+    "3-omnibus-RMSE": (
+        "Dos contrastes globales que preguntan si ALGUN modelo difiere del resto, sin "
+        "decir cual. Friedman es la version para medidas repetidas y respeta que los "
+        "cinco modelos se evaluaron sobre los mismos folds; Kruskal-Wallis trata las "
+        "muestras como independientes y por tanto ignora ese emparejamiento."
+    ),
+    "3-omnibus-F1": (
+        "Los mismos dos contrastes globales sobre el F1 macro."
+    ),
+    "3b-nemenyi-posthoc-RMSE": (
+        "Post-hoc que solo tiene sentido despues de un Friedman significativo: compara "
+        "los 10 pares posibles usando la distribucion del rango studentizado y ajusta "
+        "por multiplicidad. La ultima fila da la diferencia critica CD, la distancia "
+        "minima entre rangos medios para declarar significativa una diferencia."
+    ),
+    "4-diebold-mariano": (
+        "Prueba pensada para comparar capacidad predictiva sobre una serie temporal. No "
+        "usa los 5 folds sino los 365 errores DIARIOS del holdout de 2018, uno por dia. "
+        "Contrasta si la perdida media de los dos modelos difiere, con varianza de largo "
+        "plazo de Newey-West (que absorbe la autocorrelacion de los errores diarios) y "
+        "correccion de Harvey-Leybourne-Newbold para muestra pequena."
+    ),
+}
+
 _INTERPRETACION_SECCION = {
     "1-normalidad-RMSE": (
         "Shapiro-Wilk sobre los RMSE de los 5 folds y sobre sus diferencias. Con n = 5 "
@@ -800,10 +1076,19 @@ def _pruebas_estadisticas() -> None:
 
     I.tabla(
         bloque,
+        explicabilidad=_EXPLICABILIDAD_SECCION.get(
+            elegida,
+            "Resultados del contraste tal como los escribio "
+            "`ml/training/statistical_tests.py`. `p_value` es el p-valor crudo, `p_holm` "
+            "el corregido por comparaciones multiples cuando aplica, y "
+            "`significativo_alpha05` el veredicto al 5 %.",
+        ),
         interpretacion=_INTERPRETACION_SECCION.get(
             elegida,
-            "Resultados del contraste. La columna `significativo_alpha05` indica si se "
-            "rechaza la hipotesis nula al 5 %.",
+            "Un p por debajo de 0.05 rechaza la hipotesis nula de que no hay "
+            "diferencia. Con solo 5 folds la potencia es baja, asi que un resultado no "
+            "significativo no demuestra equivalencia: demuestra que este diseno no "
+            "puede distinguirlos.",
         ),
         formato={c: "{:.4f}" for c in
                  ("statistic", "DM_stat", "shapiro_W", "p_value", "p_holm",
@@ -814,12 +1099,30 @@ def _pruebas_estadisticas() -> None:
     with izq:
         I.figura(A.TRAIN_FIG / "statistical_tests_nemenyi_cd.png",
                  titulo_fig="Diagrama de diferencias criticas (Nemenyi)",
-                 interpretacion="Modelos unidos por la misma barra no son distinguibles "
-                                "entre si. CD = 2.728 para k = 5 y N = 5.",
+                 explicabilidad=(
+                     "Los cinco modelos colocados sobre un eje de rango medio (1 = mejor "
+                     "RMSE medio entre folds, 5 = peor). La diferencia critica CD es la "
+                     "distancia minima entre dos rangos para que la diferencia sea "
+                     "significativa al 5 %; las barras horizontales unen los grupos que "
+                     "NO alcanzan esa distancia. Aqui CD = 2.728 con k = 5 modelos y "
+                     "N = 5 folds."
+                 ),
+                 interpretacion=(
+                     "Los modelos unidos por una misma barra no son distinguibles entre "
+                     "si. Con un CD de 2.728 sobre una escala que solo va de 1 a 5, casi "
+                     "cualquier par queda unido: es la forma grafica de decir que cinco "
+                     "folds no bastan para separar estos modelos. Solo CNN-LSTM se "
+                     "despega de Random Forest y de XGBoost."
+                 ),
                  comando=_CMD_STATS)
     with der:
         I.figura(A.TRAIN_FIG / "statistical_tests_distribuciones.png",
                  titulo_fig="Distribucion de las metricas por fold",
+                 explicabilidad=(
+                     "Las muestras sobre las que operan los contrastes: los valores de "
+                     "RMSE y de F1 macro que cada modelo obtuvo en cada uno de los cinco "
+                     "folds. Es el dato de partida, antes de cualquier prueba."
+                 ),
                  interpretacion="El solapamiento visual es la version grafica de por que "
                                 "casi ningun contraste sale significativo.",
                  comando=_CMD_STATS)

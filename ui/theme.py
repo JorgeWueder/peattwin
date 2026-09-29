@@ -268,25 +268,52 @@ _CSS = """
   }
 }
 
-/* Ultima linea de defensa: el valor de una metrica nunca se recorta. Si no
-   cabe, se reduce; antes que mostrar «83…» donde pone «83 %». */
+/* Ultima linea de defensa: el valor de una metrica nunca se recorta. Antes que
+   mostrar «83…» donde pone «83 %», se deja desbordar.
+
+   Pero `overflow: visible` a secas tiene un precio que costo un fallo real: un
+   valor de TEXTO largo —«Stacking Ensemble (tuned)», 298px en una columna de
+   173px— no se recortaba pero se pintaba ENCIMA de la metrica siguiente, y el
+   nombre del modelo y su score salian superpuestos. Que no se corte no puede
+   significar que invada al vecino.
+
+   La salida es envolver en vez de desbordar: `break-word` solo parte cuando la
+   palabra no cabe por si sola, asi que un numero —que nunca tiene espacios y
+   siempre cabe— se sigue mostrando entero y en una linea, y una cadena con
+   espacios baja de renglon dentro de SU columna. La reserva de dos lineas de
+   la etiqueta mantiene los valores alineados aunque uno ocupe dos. */
+[data-testid="stMetricValue"],
 [data-testid="stMetricValue"] [data-testid="stMarkdownContainer"] {
   overflow: visible !important;
   text-overflow: clip !important;
+  white-space: normal !important;
+  overflow-wrap: break-word;
 }
 
 /* ==================================================== bloques de interpretacion
-   `ui.interpret._nota`: la regla del proyecto es que ningun numero se muestra
-   solo. Eso merece forma propia, no otra tarjeta igual a las demas: filete de
-   acento a la izquierda y fondo apenas tenido, para que se lea como anotacion
-   al margen del dato que acompana.
+   `ui.interpret._bloque`: la regla del proyecto es que ningun numero se muestra
+   solo, y que la anotacion va en DOS partes separadas —explicacion (que es) e
+   interpretacion (que significa)—. Eso merece forma propia, no otra tarjeta
+   igual a las demas: filete de acento a la izquierda y fondo apenas tenido,
+   para que se lea como anotacion al margen del dato que acompana.
 
-   Coincide con un contenedor con borde cuyo unico hijo es un caption, que es
-   exactamente lo que construye `_nota`. Las tarjetas de rol de la vista de
-   administracion tienen tres hijos y no entran aqui. */
-[data-testid="stMain"] [data-testid="stVerticalBlock"]:has(
-  > [data-testid="stElementContainer"]:only-child [data-testid="stCaptionContainer"]
-) {
+   El ancla es la clase `st-key-ptnotaN` que Streamlit genera a partir de la
+   `key` del contenedor. Antes se enganchaba a «contenedor con borde cuyo unico
+   hijo es un caption», y eso dejo de ser cierto al pasar de uno a dos captions:
+   un selector que describe el contenido se rompe en cuanto el contenido cambia,
+   mientras que una key puesta a proposito no.
+
+   CUIDADO: en esta hoja no puede aparecer NUNCA el caracter «menor que», ni
+   siquiera dentro de un comentario. `inject()` envuelve la hoja en una etiqueta
+   de estilo y la entrega por `st.html`, cuyo saneador parsea ese contenido como
+   HTML: un solo signo de menor suelto le hace creer que empieza una etiqueta y
+   descarta la hoja ENTERA, en silencio, sin error ni en el servidor ni en la
+   consola del navegador. Costo un rato encontrarlo: este mismo comentario
+   nombraba la clase como «ptnota» seguida de la letra n entre signos de mayor y
+   menor, y por ese unico caracter la aplicacion se quedo sin sus 23 KB de
+   estilos conservando solo los del login, que se inyectan aparte. La funcion
+   `_valida_css()` de este modulo lo comprueba ahora al importar. */
+[data-testid="stMain"] [class*="st-key-ptnota"] {
   border: 1px solid var(--pt-border) !important;
   border-left: 2px solid var(--pt-accent-line) !important;
   background: var(--pt-accent-soft);
@@ -294,12 +321,53 @@ _CSS = """
   padding: 0.75rem 1rem !important;
   margin-top: 0.375rem;
 }
-[data-testid="stMain"] [data-testid="stVerticalBlock"]:has(
-  > [data-testid="stElementContainer"]:only-child [data-testid="stCaptionContainer"]
-) [data-testid="stCaptionContainer"] {
+
+/* El texto llena la caja. Antes llevaba `max-width: 88ch` heredando ademas el
+   `78ch` de la regla general de captions, y el resultado era que la caja media
+   864px mientras el texto se cortaba a 509-574px: 300px de vacio a la derecha
+   de cada interpretacion, y con anchos distintos entre cajas porque `ch`
+   depende de la fuente y las que llevan `code` inline resuelven otra.
+
+   Una medida de lectura es buena tipografia, pero aqui competia con el borde:
+   la caja anunciaba un ancho que el texto no usaba, y eso se lee como error de
+   maquetacion, no como respiro. Entre estrechar la caja o ensanchar el texto,
+   gana el texto: estas anotaciones acompanan a una tabla o un grafico y deben
+   alinearse con el ancho de lo que explican. */
+[data-testid="stMain"] [class*="st-key-ptnota"] [data-testid="stCaptionContainer"] {
   color: var(--pt-ink);
   opacity: 0.82;
-  max-width: 88ch;
+  max-width: none;
+}
+
+/* Separacion entre las dos partes. Un filete tenue en vez de mas espacio en
+   blanco: el bloque ya vive dentro de una caja, y solo con aire las dos partes
+   se leerian como un parrafo partido en vez de como dos respuestas distintas.
+
+   Los `stElementContainer` cuelgan DIRECTAMENTE del contenedor con la key: no
+   hay `stVerticalBlock` intermedio. Se comprobo en el DOM porque la primera
+   version daba por supuesto ese nivel de mas y no casaba con nada. */
+[data-testid="stMain"] [class*="st-key-ptnota"]
+  > [data-testid="stElementContainer"]:not(:first-child) {
+  border-top: 1px solid var(--pt-border);
+  padding-top: 0.55rem;
+  margin-top: 0.55rem;
+}
+
+/* El rotulo de cada parte («Explicacion.» / «Interpretacion.») va en la
+   micro-etiqueta del sistema, el mismo registro que las etiquetas de las
+   metricas: es un rotulo de estructura, no enfasis dentro de la frase. */
+/* Las clases de emotion que genera Streamlit ganan por especificidad, asi que
+   este rotulo necesita `!important` para imponerse: sin el, el selector casaba
+   (12 nodos) pero el `display: block` y el color se perdian en la cascada y las
+   dos partes salian como un parrafo corrido con una palabra en negrita. */
+[data-testid="stMain"] [class*="st-key-ptnota"] [data-testid="stCaptionContainer"] strong {
+  display: block !important;
+  font-size: var(--pt-label-size) !important;
+  letter-spacing: var(--pt-label-track) !important;
+  font-weight: 600 !important;
+  color: var(--pt-accent) !important;
+  opacity: 1 !important;
+  margin-bottom: 0.2rem;
 }
 
 /* ==================================================== botones
@@ -649,11 +717,38 @@ _CSS_LOGIN = """
 """
 
 
+_ABRE_ETIQUETA = chr(60)   # el signo de «menor que», escrito asi a proposito:
+                           # ponerlo literal en este fichero seria inofensivo en
+                           # el codigo, pero invita a copiarlo dentro de la hoja.
+
+
+def _valida_css() -> None:
+    """Falla al importar si alguna hoja lleva un caracter que la anularia.
+
+    `st.html` sanea su contenido como HTML. Un signo de «menor que» dentro del
+    CSS —aunque este en un comentario— hace que el saneador se coma la hoja
+    entera sin avisar: la aplicacion arranca, no hay excepcion ni warning, y
+    simplemente sale sin estilos. Un fallo mudo que se descubre mirando pixeles
+    es caro, asi que aqui se convierte en un error al arrancar, que es barato.
+    """
+    for nombre, hoja in (("_CSS", _CSS), ("_CSS_LOGIN", _CSS_LOGIN)):
+        if _ABRE_ETIQUETA in hoja:
+            pos = hoja.index(_ABRE_ETIQUETA)
+            raise ValueError(
+                f"{nombre} contiene un signo de «menor que» en la posicion {pos}, "
+                f"que anularia la hoja entera al pasar por st.html. "
+                f"Contexto: ...{hoja[max(0, pos - 60):pos + 20]!r}..."
+            )
+
+
+_valida_css()
+
+
 def inject() -> None:
     """Escribe la hoja de estilos base. Idempotente por rerun."""
-    st.html(f"<style>{_CSS}</style>")
+    st.html(f"{_ABRE_ETIQUETA}style>{_CSS}{_ABRE_ETIQUETA}/style>")
 
 
 def inject_login() -> None:
     """Estilos adicionales de la pantalla de acceso. Solo CSS, como `inject`."""
-    st.html(f"<style>{_CSS_LOGIN}</style>")
+    st.html(f"{_ABRE_ETIQUETA}style>{_CSS_LOGIN}{_ABRE_ETIQUETA}/style>")
