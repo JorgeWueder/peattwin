@@ -12,6 +12,8 @@ import altair as alt
 import pandas as pd
 import streamlit as st
 
+from ui.i18n import tr
+
 EMERALD = "#059669"   # predicho
 INK = "#18181b"       # observado
 ORANGE = "#ea580c"    # CH4 en la curva de respuesta
@@ -127,6 +129,8 @@ def series_chart(
         var_name="serie",
         value_name="valor",
     )
+    obs, pred = tr("observado", "observed"), tr("predicho", "predicted")
+    long["serie"] = long["serie"].map({"observado": obs, "predicho": pred})
     p = _paleta()
     line = (
         _base(long)
@@ -138,18 +142,18 @@ def series_chart(
                 "serie:N",
                 title=None,
                 scale=alt.Scale(
-                    domain=["observado", "predicho"],
+                    domain=[obs, pred],
                     range=[p["observado"], p["predicho"]],
                 ),
                 legend=_legend(),
             ),
             strokeWidth=alt.condition(
-                alt.datum.serie == "predicho", alt.value(2.0), alt.value(1.0)
+                alt.datum.serie == pred, alt.value(2.0), alt.value(1.0)
             ),
             tooltip=[
-                alt.Tooltip("date:T", title="fecha"),
-                alt.Tooltip("serie:N", title="serie"),
-                alt.Tooltip("valor:Q", title="valor", format=".3f"),
+                alt.Tooltip("date:T", title=tr("fecha", "date")),
+                alt.Tooltip("serie:N", title=tr("serie", "series")),
+                alt.Tooltip("valor:Q", title=tr("valor", "value"), format=".3f"),
             ],
         )
     )
@@ -176,7 +180,7 @@ def response_curve_chart(
         _base(df)
         .mark_line(point=True, color=color, strokeWidth=2)
         .encode(
-            x=alt.X("wtd:Q", title="Nivel freatico objetivo (cm)", axis=_axis()),
+            x=alt.X("wtd:Q", title=tr("Nivel freatico objetivo (cm)", "Target water table depth (cm)"), axis=_axis()),
             y=alt.Y(f"{metric}:Q", title=f"{label} ({unit})", axis=_axis()),
             tooltip=[
                 alt.Tooltip("wtd:Q", title="WTD (cm)", format=".0f"),
@@ -209,13 +213,14 @@ def heatmap(
     dominio: tuple[float, float] = (-1.0, 1.0),
     esquema: str = "redyellowgreen",
     decimales: str = ".2f",
-    titulo_valor: str = "valor",
+    titulo_valor: str | None = None,
     altura: int = 460,
 ) -> alt.LayerChart:
     """Matriz cuadrada (correlacion, metricas normalizadas) como heatmap.
 
     `df` viene con las variables en el indice y en las columnas.
     """
+    titulo_valor = titulo_valor or tr("valor", "value")
     largo = df.reset_index().melt(
         id_vars=df.index.name or "index", var_name="columna", value_name="valor"
     )
@@ -235,8 +240,8 @@ def heatmap(
                 scale=alt.Scale(scheme=esquema, domain=list(dominio)),
             ),
             tooltip=[
-                alt.Tooltip("fila:N", title="fila"),
-                alt.Tooltip("columna:N", title="columna"),
+                alt.Tooltip("fila:N", title=tr("fila", "row")),
+                alt.Tooltip("columna:N", title=tr("columna", "column")),
                 alt.Tooltip("valor:Q", title=titulo_valor, format=decimales),
             ],
         )

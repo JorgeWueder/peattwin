@@ -15,7 +15,9 @@ from dataclasses import dataclass, field
 import streamlit as st
 
 from app.services import access, auth_service
+from ui import i18n
 from ui.db import session_scope
+from ui.i18n import tr
 
 _KEY = "peattwin_user"
 
@@ -43,7 +45,7 @@ class SessionUser:
         for role in ROLE_ORDER:
             if role in self.role_names:
                 return role
-        return self.role_names[0] if self.role_names else "sin rol"
+        return self.role_names[0] if self.role_names else tr("sin rol", "no role")
 
 
 def _snapshot(user) -> SessionUser:
@@ -65,9 +67,12 @@ def login(identifier: str, password: str) -> tuple[bool, str | None]:
     with session_scope() as db:
         user = auth_service.authenticate(db, identifier.strip(), password)
         if user is None:
-            return False, "Usuario o contrasena incorrectos."
+            return False, tr("Usuario o contrasena incorrectos.", "Wrong username or password.")
         if not user.is_active:
-            return False, "Usuario inactivo. Pide a un administrador que lo reactive."
+            return False, tr(
+                "Usuario inactivo. Pide a un administrador que lo reactive.",
+                "Inactive user. Ask an administrator to reactivate it.",
+            )
         auth_service.touch_last_login(db, user)
         st.session_state[_KEY] = _snapshot(user)
     return True, None
@@ -83,8 +88,10 @@ def logout() -> None:
     del usuario, al entrar con otra cuenta seguirian visibles los botones de
     descarga del anterior. El `st.rerun()` lo hace el llamador.
     """
+    idioma = i18n.keep_on_logout()
     for key in list(st.session_state.keys()):
         del st.session_state[key]
+    i18n.restore(idioma)
     st.cache_data.clear()
 
 

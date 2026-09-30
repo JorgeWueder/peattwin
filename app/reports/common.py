@@ -12,6 +12,7 @@ from sqlalchemy.orm import Session
 
 from app.core.config import settings
 from app.core.errors import DomainError
+from app.core.i18n import tr
 from app.models.flux_observation import FluxObservation
 from app.models.ml_model import MLModel
 from app.models.ml_model_metric import MLModelMetric
@@ -351,10 +352,12 @@ def regression_scores(obs: list[float], pred: list[float]) -> tuple[float | None
 
 def peatland_label(t) -> str:
     m = {
-        "BOG": "bog (ombrotrófica)", "FEN": "fen (minerotrófica)",
+        "BOG": tr("bog (ombrotrófica)", "bog (ombrotrophic)"),
+        "FEN": tr("fen (minerotrófica)", "fen (minerotrophic)"),
         "BLANKET_BOG": "blanket bog", "RAISED_BOG": "raised bog",
-        "TRANSITIONAL_MIRE": "turbera de transición", "SWAMP_FOREST": "bosque pantanoso",
-        "OTHER": "otro",
+        "TRANSITIONAL_MIRE": tr("turbera de transición", "transitional mire"),
+        "SWAMP_FOREST": tr("bosque pantanoso", "swamp forest"),
+        "OTHER": tr("otro", "other"),
     }
     key = str(getattr(t, "value", t)) if t is not None else None
     return m.get(key, key or "—")
