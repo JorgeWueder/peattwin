@@ -47,6 +47,11 @@ FINAL_META = MODELS_DIR / "modelo_final_metadata.json"
 
 SEED = 42
 
+# Resolucion de las figuras estaticas guardadas a disco (EDA y entrenamiento).
+# 600 dpi es el minimo habitual de las revistas para figuras de linea y mapas
+# de calor; con 120 dpi el texto de los ejes se pixela al imprimir.
+FIG_DPI = 600
+
 # --- Objetivos ---
 TARGET_NEE = "NEE_F_ANNOPTLM"          # regresion CO2 (gC m-2 d-1)
 TARGET_FCH4 = "FCH4_F_ANNOPTLM"        # regresion CH4 (nmol m-2 s-1)

@@ -220,7 +220,7 @@ def boxplots(per_fold: pd.DataFrame) -> None:
     )
     fig.tight_layout()
     C.FIG_DIR.mkdir(parents=True, exist_ok=True)
-    fig.savefig(C.FIG_DIR / "cv_boxplots_estabilidad.png", dpi=120, bbox_inches="tight")
+    fig.savefig(C.FIG_DIR / "cv_boxplots_estabilidad.png", dpi=C.FIG_DPI, bbox_inches="tight")
     plt.close(fig)
     print(f"  figura -> figuras/cv_boxplots_estabilidad.png")
 

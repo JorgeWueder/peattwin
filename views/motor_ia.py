@@ -270,6 +270,97 @@ def _eda() -> None:
             comando=_CMD_EDA,
         )
 
+    st.markdown(tr("#### Series, perfil termico y regimen de balance",
+                   "#### Series, thermal profile and balance regime"))
+    izq, der = st.columns(2)
+    with izq:
+        I.figura(
+            A.EDA_FIG / "05_serie_temporal_NEE_CO2.png",
+            titulo_fig=tr("Serie diaria del NEE (CO₂)", "Daily NEE (CO₂) series"),
+            explicabilidad=tr(
+                "Serie diaria completa del NEE en gC m⁻² d⁻¹ frente al tiempo, 2016-2018, "
+                "con una media movil de 30 dias y la linea de cero marcada. Los valores "
+                "negativos son captura neta de carbono y los positivos, emision.",
+                "Complete daily NEE series in gC m⁻² d⁻¹ against time, 2016-2018, with a "
+                "30-day moving average and the zero line marked. Negative values are net "
+                "carbon uptake and positive ones, emission.",
+            ),
+            interpretacion=tr(
+                "Los tramos de captura se concentran entre primavera y verano y el resto "
+                "del ano el sitio emite; en tres anos no hay una deriva plurianual visible.",
+                "Uptake stretches concentrate between spring and summer and the rest of the "
+                "year the site emits; there is no visible multi-year drift in three years.",
+            ),
+            comando=_CMD_EDA,
+        )
+    with der:
+        I.figura(
+            A.EDA_FIG / "06_serie_temporal_FCH4_CH4.png",
+            titulo_fig=tr("Serie diaria del FCH₄ (CH₄)", "Daily FCH₄ (CH₄) series"),
+            explicabilidad=tr(
+                "Serie diaria completa del FCH₄ en nmol m⁻² s⁻¹ con una media movil de 30 "
+                "dias. No lleva linea de cero porque el flujo es positivo en los 1096 "
+                "dias del registro (minimo 0.41).",
+                "Complete daily FCH₄ series in nmol m⁻² s⁻¹ with a 30-day moving average. "
+                "It has no zero line because the flux is positive on all 1096 days of the "
+                "record (minimum 0.41).",
+            ),
+            interpretacion=tr(
+                "La turbera emite metano todos los dias, con pulsos estivales muy "
+                "marcados que dominan el total anual.",
+                "The peatland emits methane every day, with strongly marked summer pulses "
+                "that dominate the annual total.",
+            ),
+            comando=_CMD_EDA,
+        )
+
+    izq, der = st.columns(2)
+    with izq:
+        I.figura(
+            A.EDA_FIG / "14_perfil_termico_suelo_TS1_TS5.png",
+            titulo_fig=tr("Perfil termico del suelo (TS_1 a TS_5)",
+                          "Soil thermal profile (TS_1 to TS_5)"),
+            explicabilidad=tr(
+                "Dispersion de la temperatura del suelo en °C en cada una de las cinco "
+                "profundidades, de TS_1 (superficial) a TS_5 (la mas profunda), sobre los "
+                "1096 dias de la serie.",
+                "Dispersion of soil temperature in °C at each of the five depths, from "
+                "TS_1 (shallowest) to TS_5 (deepest), over the 1096 days of the series.",
+            ),
+            interpretacion=tr(
+                "La amplitud se amortigua con la profundidad mientras la media se "
+                "mantiene (≈ 11 °C): es el argumento grafico para sustituir las cinco "
+                "sondas por TS_promedio.",
+                "The amplitude dampens with depth while the mean holds (≈ 11 °C): it is "
+                "the graphical argument for replacing the five probes with TS_promedio.",
+            ),
+            comando=_CMD_EDA,
+        )
+    with der:
+        I.figura(
+            A.EDA_FIG / "11_distribucion_clase_balance_carbono.png",
+            titulo_fig=tr("Regimen de balance de carbono", "Carbon balance regime"),
+            explicabilidad=tr(
+                "A la izquierda, recuento de dias por clase (sumidero: NEE < 0; fuente: "
+                "NEE ≥ 0), derivada del signo del NEE observado. A la derecha, fraccion "
+                "de dias de sumidero de cada mes sobre los tres anos.",
+                "On the left, count of days per class (sink: NEE < 0; source: NEE ≥ 0), "
+                "derived from the sign of observed NEE. On the right, fraction of sink "
+                "days in each month over the three years.",
+            ),
+            interpretacion=tr(
+                "Hay 353 dias de sumidero frente a 743 de fuente (≈ 32/68): ese desbalance "
+                "obliga a evaluar con F1 macro y AUC y no con accuracy. El sumidero se "
+                "concentra de abril a septiembre, con el maximo en mayo (74 %), y casi "
+                "desaparece de noviembre a marzo.",
+                "There are 353 sink days against 743 source days (≈ 32/68): that imbalance "
+                "forces evaluation with F1 macro and AUC rather than accuracy. The sink "
+                "concentrates from April to September, peaking in May (74 %), and nearly "
+                "vanishes from November to March.",
+            ),
+            comando=_CMD_EDA,
+        )
+
     I.texto_md(A.resumen_md("eda"))
 
 
@@ -536,6 +627,34 @@ def _comparativa() -> None:
             "dominates as a WHOLE without being the best on almost any single metric, and "
             "that is why an explicit selection criterion is needed instead of choosing by "
             "the best column.",
+        ),
+        comando=_CMD_TRAIN,
+    )
+
+    I.figura(
+        A.TRAIN_FIG / "comparativa_regresion_clasificacion.png",
+        titulo_fig=tr("Comparativa de regresion y clasificacion",
+                      "Regression and classification comparison"),
+        explicabilidad=tr(
+            "Dos paneles con los cinco modelos en el eje X. A la izquierda, R² de NEE y "
+            "de FCH₄ en barras (mas alto es mejor; 0 es predecir la media). A la "
+            "derecha, accuracy, F1 macro, recall de sumidero y AUC en lineas, todas entre "
+            "0 y 1. Mismo holdout de 2018 en ambos.",
+            "Two panels with the five models on the X axis. On the left, R² of NEE and "
+            "FCH₄ as bars (higher is better; 0 is predicting the mean). On the right, "
+            "accuracy, F1 macro, sink recall and AUC as lines, all between 0 and 1. Same "
+            "2018 holdout in both.",
+        ),
+        interpretacion=tr(
+            "Ningun modelo domina en todo a la vez: el mejor R² de NEE, el mejor R² de "
+            "FCH₄ y el mejor F1/AUC los tienen modelos distintos. Y la brecha entre "
+            "objetivos es mayor que la brecha entre modelos: el NEE apenas se predice "
+            "(R² 0.16-0.22 en los cinco) mientras que el FCH₄ llega a R² 0.72-0.84 en "
+            "los cuatro modelos clasicos.",
+            "No model dominates on everything at once: the best NEE R², the best FCH₄ R² "
+            "and the best F1/AUC belong to different models. And the gap between targets "
+            "is larger than the gap between models: NEE is barely predicted (R² 0.16-0.22 "
+            "in all five) while FCH₄ reaches R² 0.72-0.84 in the four classical models.",
         ),
         comando=_CMD_TRAIN,
     )
