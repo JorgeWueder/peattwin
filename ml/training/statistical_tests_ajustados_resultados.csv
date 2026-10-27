@@ -1,0 +1,11 @@
+comparacion,metrica,test,p_value,mean_diff,p_holm,statistic
+Stacking Ensemble (tuned) vs Random Forest (tuned),RMSE (CV),Wilcoxon signed-rank,0.625,0.8759540508493557,1.0,
+Stacking Ensemble (tuned) vs Gradient Boosting (XGBoost) (tuned),RMSE (CV),Wilcoxon signed-rank,0.8125,-0.21364323509994493,1.0,
+Friedman (3 modelos),RMSE (CV),Friedman,0.44932896411722134,,,1.6000000000000014
+Stacking Ensemble (tuned) vs Random Forest (tuned),F1_macro (CV),Wilcoxon signed-rank,0.125,0.10200293322874907,0.25,
+Stacking Ensemble (tuned) vs Gradient Boosting (XGBoost) (tuned),F1_macro (CV),Wilcoxon signed-rank,1.0,0.03571226632629617,1.0,
+Friedman (3 modelos),F1_macro (CV),Friedman,0.0742735782143338,,,5.200000000000003
+DM NEE: Stacking Ensemble (tuned) vs Random Forest (tuned),holdout 2018,Diebold-Mariano,0.8406139194265042,-0.010985303097555911,,-0.2012520328800816
+DM FCH4: Stacking Ensemble (tuned) vs Random Forest (tuned),holdout 2018,Diebold-Mariano,0.04442590205847754,-132.1640027210539,,-2.0170318836765664
+DM NEE: Stacking Ensemble (tuned) vs Gradient Boosting (XGBoost) (tuned),holdout 2018,Diebold-Mariano,0.027662261207377265,-0.26130750543748493,,-2.2109235204378037
+DM FCH4: Stacking Ensemble (tuned) vs Gradient Boosting (XGBoost) (tuned),holdout 2018,Diebold-Mariano,0.4589649013974616,72.75180498762293,,0.7413406931445133

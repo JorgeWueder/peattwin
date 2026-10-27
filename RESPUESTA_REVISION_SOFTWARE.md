@@ -51,3 +51,36 @@ La fila gap = 0 reproduce exactamente la Tabla del artículo. Purgar 7 o 30 día
 - **Intervalos de confianza:** no hay. Se puede añadir un bootstrap por bloques sobre el holdout.
 - **RMSE del resumen:** el resumen cita 1,261 y 43,80, que no aparecen en una tabla del cuerpo. Hay que añadir una tabla con las métricas del modelo desplegado.
 - **"Gemelo digital":** no es de software, pero conviene incorporar la taxonomía de Kritzinger et al. (2018), que hoy no se cita.
+
+## 4. FON-03 resuelto: contrastes sobre los modelos ajustados
+
+Script nuevo: [statistical_tests_tuned.py](ml/training/statistical_tests_tuned.py). Repite la validación cruzada temporal (5 pliegues) y Diebold-Mariano (holdout 2018, retardo 7) con los hiperparámetros ajustados de `TUNING_resumen.md`. Resultados en `ml/training/cv_por_fold_ajustados.csv` y `statistical_tests_ajustados_resultados.csv`.
+
+| Contraste | Resultado |
+|---|---|
+| Friedman, RMSE (CV, 3 modelos ajustados) | χ² = 1,60; p = 0,449 |
+| Friedman, F1 macro (CV) | χ² = 5,20; p = 0,074 |
+| Wilcoxon Stacking vs RF / XGB, RMSE (Holm) | p = 1,0 / 1,0 |
+| Wilcoxon Stacking vs RF / XGB, F1 (Holm) | p = 0,25 / 1,0 |
+| DM FCH₄: Stacking vs RF | DM = −2,02; p = 0,044 |
+| DM NEE: Stacking vs XGBoost | DM = −2,21; p = 0,028 |
+| DM NEE: Stacking vs RF; FCH₄: Stacking vs XGBoost | p = 0,841; p = 0,459 |
+
+Lectura honesta: en validación cruzada los tres ajustados siguen sin distinguirse (igual que los base). En el holdout, dos comparaciones salen con p < 0,05, pero con cuatro contrastes y Holm dejan de serlo (p ajustado ≈ 0,11–0,13). El texto del artículo (párrafo "Una nota más", docx v2) lo presenta como indicio, no como evidencia concluyente.
+
+## 5. Intervalos de confianza y métricas del modelo desplegado
+
+Script nuevo: [metricas_modelo_desplegado.py](ml/training/metricas_modelo_desplegado.py). Carga `modelo_final.pkl` sin reentrenar, comprueba (con `assert`) que las métricas coinciden con `modelo_final_metadata.json` y calcula IC del 95 % por bootstrap de bloques móviles (14 días, 2000 repeticiones, semilla 42). Resultado en `ml/training/metricas_modelo_desplegado.csv`.
+
+| Métrica (holdout 2018) | Valor | IC 95 % |
+|---|---|---|
+| NEE RMSE (g C m⁻² d⁻¹) | 1,261 | 0,953 – 1,558 |
+| NEE R² | 0,236 | 0,074 – 0,339 |
+| FCH₄ RMSE (nmol m⁻² s⁻¹) | 43,80 | 25,63 – 62,12 |
+| FCH₄ R² | 0,842 | 0,749 – 0,907 |
+| F1 macro | 0,817 | 0,720 – 0,899 |
+| AUC | 0,921 | 0,848 – 0,970 |
+
+- Los RMSE del resumen (1,261 y 43,80) **sí son trazables**: salen del modelo desplegado, no de las tablas de los modelos base ni de la Tabla 16. La observación del revisor se resuelve con este párrafo, que se añadió al docx v2 tras la descripción de la matriz de confusión.
+- Con bloques de 7 días los IC son algo más estrechos (p. ej. NEE R² 0,125 – 0,326) y la lectura no cambia.
+- El IC del R² del NEE se acerca a cero por abajo; es coherente con lo que ya dice el artículo sobre su baja predictibilidad.
