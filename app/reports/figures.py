@@ -18,10 +18,13 @@ _EMERALD = "#059669"
 _INK = "#18181b"
 _ORANGE = "#ea580c"
 
+# 600 dpi: mismo minimo que las figuras del articulo (ml/training/config.py FIG_DPI).
+_DPI = 600
+
 
 def _png(fig) -> bytes:
     buf = io.BytesIO()
-    fig.savefig(buf, format="png", dpi=140, bbox_inches="tight")
+    fig.savefig(buf, format="png", dpi=_DPI, bbox_inches="tight")
     plt.close(fig)
     return buf.getvalue()
 

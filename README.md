@@ -61,7 +61,9 @@ peattwin/
 │   ├── etl/                    #   run_etl.py, load_to_db.py  (FLUXNET-CH4 -> parquet + BD)
 │   ├── eda/                    #   run_eda.py  (descriptivos, outliers, STL, Shapiro)
 │   ├── training/               #   run_training.py, cross_validation.py, tuning.py,
-│   │                           #     statistical_tests.py, models_classical.py, model_cnn_lstm.py
+│   │                           #     statistical_tests.py, statistical_tests_tuned.py,
+│   │                           #     sensibilidad_stacking.py, metricas_modelo_desplegado.py,
+│   │                           #     regenerar_figuras.py, models_classical.py, model_cnn_lstm.py
 │   └── models/                 #   modelo_final.pkl / .h5 + metadata (no versionado en git)
 │
 └── data/
@@ -259,6 +261,15 @@ python -m ml.training.cross_validation --folds 5
 python -m ml.training.tuning
 # 4.7 Pruebas estadísticas -> PRUEBAS_ESTADISTICAS_resumen.md + CSV de p-values
 python -m ml.training.statistical_tests
+# 4.8 Contrastes sobre los modelos ajustados (Friedman, Wilcoxon, Diebold-Mariano)
+python -m ml.training.statistical_tests_tuned
+# 4.9 Sensibilidad del Stacking a la validación interna (KFold vs KFold purgado)
+python -m ml.training.sensibilidad_stacking --gaps 0 7 30
+# 4.10 Métricas del modelo desplegado con IC 95 % (bootstrap por bloques, semilla 42)
+python -m ml.training.metricas_modelo_desplegado --block 14 --reps 2000
+# Opcional: regenera las figuras estáticas a 600 dpi sin tocar modelos ni tablas
+#     (lee los CSV y reentrena en memoria solo para las curvas ROC)
+python -m ml.training.regenerar_figuras
 ```
 
 Detalle en [ml/etl/README.md](ml/etl/README.md), [ml/eda/README.md](ml/eda/README.md)

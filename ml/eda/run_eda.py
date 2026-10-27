@@ -61,6 +61,7 @@ META_JSON = PROCESSED / "DE-Zrk_etl_metadata.json"
 
 EDA_DIR = Path(__file__).resolve().parent
 FIG_DIR = EDA_DIR / "figuras"
+FIG_DPI = 600  # resolucion minima habitual de las revistas; ver ml/training/config.py
 TBL_DIR = EDA_DIR / "tablas"
 OUT_MD = EDA_DIR / "EDA_DE-Zrk_resumen.md"
 OUT_WINSOR = EDA_DIR / "DE-Zrk_winsorized_k3.parquet"
@@ -107,7 +108,7 @@ def _md_table(df: pd.DataFrame, floatfmt: str = ".3f", index_name: str | None = 
 def _savefig(fig, name: str) -> str:
     FIG_DIR.mkdir(parents=True, exist_ok=True)
     path = FIG_DIR / name
-    fig.savefig(path, dpi=120, bbox_inches="tight")
+    fig.savefig(path, dpi=FIG_DPI, bbox_inches="tight")
     plt.close(fig)
     print(f"  figura -> figuras/{name}")
     return name

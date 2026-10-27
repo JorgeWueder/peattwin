@@ -250,7 +250,7 @@ def figure_bars(res: pd.DataFrame) -> None:
 
 def _save(fig, name: str) -> None:
     C.FIG_DIR.mkdir(parents=True, exist_ok=True)
-    fig.savefig(C.FIG_DIR / name, dpi=120, bbox_inches="tight")
+    fig.savefig(C.FIG_DIR / name, dpi=C.FIG_DPI, bbox_inches="tight")
     plt.close(fig)
     print(f"  figura -> figuras/{name}")
 
